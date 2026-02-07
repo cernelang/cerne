@@ -5,7 +5,7 @@
 The Cerne Project uses multiple licenses:
 - **Compiler**: Licensed under the [LGPL-3.0 license](LICENSE)
 - **Standard Library**: Licensed under the [Apache 2.0 license](LICENSE-APACHE)
-- **Specification and Documentation**: Licensed under the [CC BY-SA 4.0 License](LICENSE-CC-BY-SA-4.0)
+- **Specification and Documentation**: Licensed under the [CC BY-SA 4.0 License](LICENSE-CC-BY-SA)
 
 Copyright © 2026 Cerne Project
 
