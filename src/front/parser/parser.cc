@@ -1,5 +1,5 @@
 /*
-    Cerne Compiler - Main Header File
+    Cerne Compiler - Parser Component, responsible for converting the token list from the previous lexer component to a more comprehensible node tree (AST).
 
     Copyright (c) 2026 Cerne Project
     SPDX-License-Identifier: LGPL-3.0-only
@@ -7,13 +7,5 @@
     This file is part of the Cerne Compiler.
     See the LICENSE file in the root directory for further details.
 */
-#ifndef CERNE
-#define CERNE
+#include "../include/parser.hpp"
 
-// cerne version update comes here for now
-const char* CERNE_VERSION = "v0.1.1";
-
-#include "./utils.hpp"
-#include "./lexer.hpp"
-
-#endif

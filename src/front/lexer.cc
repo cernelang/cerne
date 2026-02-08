@@ -38,13 +38,14 @@ class LexerMachine {
         cerne::TokenTypes string_subtype;
         size_t line = 1;
         size_t col = 0;
+        size_t offset = 0;
         bool is_comment = false;
         bool is_mlc = false;
         bool is_string = false;
         std::string raw_str_content = "";
 
-        LexerMachine(){}
-        ~LexerMachine(){}
+        LexerMachine()=default;
+        ~LexerMachine()=default;
 
         void update(char c) {
             if(c == '\n') {
@@ -53,24 +54,23 @@ class LexerMachine {
                 is_comment=false;
             } else col++;
         }
-        void push(cerne::Token token) {
+        void push(const cerne::Token& token) {
             tokens.push_back(token);
         }
 
         /**
-         * 0 -> is not a comment
-         * 1 -> is a comment/mlc and just skip
-         * 2 -> is the end of an MLC and skip the next character
+         * is a comment or not
          */
-        int comment(char c, char n) {
+        bool comment(char c, char n) {
             if(is_mlc) {
                 if(c == '*' && n == '/') {
                     is_mlc = false;
-                    return 2;
-                } else return 1;
-            } else if(is_comment) return 1;
+                    offset++;
+                    return true;
+                } else return true;
+            } else if(is_comment) return true;
 
-            return 0;
+            return false;
         }
 
         /**
@@ -78,8 +78,7 @@ class LexerMachine {
          */
         bool string(char c) {
             if(is_string) {
-                auto symb_type = symbols[c];
-                if(symb_type == string_subtype) {
+                if(symbols[c] == string_subtype) {
                     // create token for the string, push it and reset machine's string information for the next string
                     auto token = cerne::Token{
                         .type=string_subtype,
@@ -105,30 +104,31 @@ class LexerMachine {
 std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char* file_path, const cerne::args& options) {
     auto machine = std::make_unique<LexerMachine>();
 
-    for(size_t i = 0; i < code.size(); i++) {
+    for(; machine->offset < code.size(); machine->offset++) {
         // store current character and next
-        char c = code[i], n = 0;
+        char c = code[machine->offset], n = 0;
 
         // update position and check for comments
         machine->update(c);
-        int comment = machine->comment(c,n);
-        if(comment) { i+=comment-1; continue; }
+        if(machine->comment(c,n)) continue;
 
         // skip for strings since the function does it's needed job
         if(machine->string(c)) continue;
 
-        if(isalpha(c)) {
+        // word checking
+        if(isalpha(c) || c == '_') {
+            // snatch the whole word (loop through ever character next to this one until it's not alnum or an underscore)
             std::string word = "";
 
-            while((isalnum(c) or c == '_') and i < code.size()) {
+            while((isalnum(c) || c == '_') && machine->offset < code.size()) {
                 word += c;
                 machine->update(c);
-                i++;
-                c = code[i];
+                machine->offset++;
+                c = code[machine->offset];
             }
 
-            // the outer for loop will perform another i++ after this iteration ends, since it ends at the first non-variable character for word (which could be whitespace or a symbol), the outer i++ will skip that character, which can be valuable for a statement.
-            i--;
+            // the outer for loop will perform another offset++ after this iteration ends, since it ends at the first non-variable character for word (which could be whitespace or a symbol), the outer offset++ will skip that character, which can be valuable for a statement.
+            machine->offset--;
 
             // to get the type, we first check if the word is in keywords, then registers, and if it's in neither then it's an IDENTIFIER
             auto type = 
@@ -144,16 +144,47 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                 .col=machine->col
             };
             machine->push(token);
-        } else if(isdigit(c)) {
+        } 
+        // number checking
+        else if(isdigit(c)) {
+            // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
+            std::string number = "";
 
-        } else {
-            if(i + 1 < code.size()) n = code[i+1];
+            while((isdigit(c) || c == ',' || c == '.') && machine->offset < code.size()) {
+                // if there already is a dot, error since multiple dots in a number is invalid
+                if(number.find('.') != number.npos) {
+                    cerne::error(file_path, "Multiple dots in number", "");
+                }
+
+                // , are just for style, they don't add any additional information to the number
+                if(c != ',') number += c;
+                machine->update(c);
+                machine->offset++;
+                c = code[machine->offset];
+            }
+
+            // realign offset (explanation on another comment in the word check, since the number loop mechanism is the same)
+            machine->offset--;
+
+            // push number token to the machine's token list
+            auto token = cerne::Token{
+                .type=cerne::TokenTypes::NUMBER,
+                .value=(void*)(new std::string(number)),
+                .line=machine->line,
+                .col=machine->col
+            };
+
+            machine->push(token);
+        } 
+        // none of those? it's a symbol/whitespace
+        else {
+            if(machine->offset + 1 < code.size()) n = code[machine->offset+1];
             std::string possible_conjecture{c,n};
 
             // check for symbols vs conjecture (conjecture is more prioritized than single symbol)
             if(conjectures.contains(possible_conjecture)) {
-                // already update i to skip the next character since the next character is part of the conjecture
-                i++;
+                // already update the offset to skip the next character since the next character is part of the conjecture
+                machine->offset++;
 
                 // get the conjecture type and in case it's a comment, set the respective comment type to true in the machine
                 auto conjecture_type = conjectures[possible_conjecture];
@@ -183,6 +214,7 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                 auto symbol_type = symbols[c];
 
                 switch(symbol_type) {
+                    // activate string collection (with subtype for metadata)
                     case cerne::TokenTypes::STRING:
                     case cerne::TokenTypes::FSTRING:
                     case cerne::TokenTypes::SSTRING:
@@ -191,6 +223,7 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                         continue;
 
                     default:
+                        // for any other symbol, just push to the token list
                         auto token = cerne::Token{
                             .type=symbol_type,
                             .value=nullptr,
@@ -200,7 +233,9 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                         machine->push(token);
                         continue;
                 }
-            } else if(!isspace(c)) {
+            } 
+            // (should ignore whitespaces)
+            else if(!isspace(c)) { 
                 // unexpected symbol
                 if(!options.contains("nodebug")) cerne::error(file_path, std::format("Unexpected symbol `{}` at {}:{}", c, machine->line, machine->col), "");
             }

@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     const cerne::args& args = cerne::parse_args(argc, argv);
     auto cli = std::make_unique<cerne::CLI>(args);
 
-    cli->event("files", [&](char** files, int file_size) {
+    cli->event("files", [&args](char** files, int file_size) {
         if(files != nullptr) {
             for(size_t i = 0; i < static_cast<size_t>(file_size); i++) {
                 const char* file = files[i];
