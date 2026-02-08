@@ -9,12 +9,6 @@
 */
 #include "../include/utils.hpp"
 
-#define ESC         "\x1b"
-#define FG          ESC "[38;5;"
-#define BG          ESC "[48;5;"
-#define RESET       ESC "[0m"
-#define SIGNATURE   "[cerne]"
-
 void cerne::error(const char* src, const std::string& message, const std::string& code_snippet) {
     std::cout << FG "196;1m" << SIGNATURE << ' ' << src << ' ' << FG "255m" << message << '\n' << code_snippet << RESET << std::endl;
     exit(1);

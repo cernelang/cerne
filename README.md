@@ -1,5 +1,6 @@
 # Cerne
 ![cerne_banner](https://media.discordapp.net/attachments/956500215844724736/1469489957302173869/image.png?ex=6987d8ab&is=6986872b&hm=1e28a66ad0a0470c95e39052bc9dabc19b476902067c272c6e40ba6944c58882&=&format=webp&quality=lossless)
+Cerne is a high level compiled programming language whose main goal is to modernize systems programming.
 
 ## License
 The Cerne Project uses multiple licenses:
@@ -10,7 +11,7 @@ The Cerne Project uses multiple licenses:
 Copyright © 2026 Cerne Project
 
 ## Contributions
-If you're planning to contribute (which we're always glad for), please read the [CONTRIBUTING](CONTRIBUTING) file in the root directory for more information before submitting a push request.
+If you're planning to contribute (which we're always glad for), please read the [CONTRIBUTING](CONTRIBUTING.md) file in the root directory for more information before submitting a push request.
 
 ## Misc
 This section is dedicated to non-categorized information about Cerne or anything related to it.

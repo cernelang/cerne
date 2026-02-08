@@ -9,8 +9,14 @@
 */
 #include "../include/utils.hpp"
 
+// global commands list
 const std::vector<std::string> commands = {"help", "version"};
 
+// constructor and destructor
+cerne::CLI::CLI(const cerne::args& args) { this->__args = args; }
+cerne::CLI::~CLI() {}
+
+// --- methods ---
 cerne::args cerne::parse_args(int argc, char** argv) {
     cerne::args args;
     std::string current_arg = "";
@@ -102,12 +108,6 @@ cerne::args cerne::parse_args(int argc, char** argv) {
     return args;
 }
 
-cerne::CLI::CLI(const cerne::args& args) {
-    this->__args = args;
-}
-
-cerne::CLI::~CLI() {}
-
 void cerne::CLI::event(std::string type, cerne::callback fnc) {
     if(this->__args.find(type) != this->__args.end()) {
         int temp = 0;
@@ -125,4 +125,20 @@ void cerne::CLI::event(std::string type, cerne::callback fnc) {
             }
         }, fnc);
     }
+}
+
+void cerne::CLI::help() {
+    std::string logo = R"raw(
+ ██████╗███████╗██████╗ ███╗   ██╗███████╗
+██╔════╝██╔════╝██╔══██╗████╗  ██║██╔════╝
+██║     █████╗  ██████╔╝██╔██╗ ██║█████╗  
+██║     ██╔══╝  ██╔══██╗██║╚██╗██║██╔══╝  
+╚██████╗███████╗██║  ██║██║ ╚████║███████╗
+ ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝
+)raw";
+
+    std::cout << FG "255;1m" << logo << 
+    "Welcome to Cerne!" << 
+    "" <<
+    RESET << std::endl;
 }

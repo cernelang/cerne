@@ -12,7 +12,7 @@
 
 // cerne version update comes here for now
 #ifndef CERNE_VERSION
-    #define CERNE_VERSION "v0.0.1"
+    #define CERNE_VERSION "v0.1.0"
 #endif
 
 #include "./utils.hpp"
