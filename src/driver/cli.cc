@@ -12,10 +12,6 @@
 // global commands list
 const std::vector<std::string> commands = {"help", "version"};
 
-// constructor and destructor
-cerne::CLI::CLI(const cerne::args& args) { this->__args = args; }
-cerne::CLI::~CLI() {}
-
 // --- methods ---
 cerne::args cerne::parse_args(int argc, char** argv) {
     cerne::args args;
@@ -46,7 +42,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
                 std::string name = arg.substr(to_remove, pos_equ - to_remove);
                 std::string value = arg.substr(pos_equ + 1);
                 
-                char* value_copy = (char*)malloc(value.length() + 1);
+                auto value_copy = (char*)malloc(value.length() + 1);
                 strcpy(value_copy, value.c_str());
                 args[name] = (void*)value_copy;
                 continue;
@@ -57,7 +53,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
             current_arg = name;
         } else {
             if(current_arg.size() > 0) {
-                char* arg_copy = (char*)malloc(arg.length() + 1);
+                auto arg_copy = (char*)malloc(arg.length() + 1);
                 strcpy(arg_copy, arg.c_str());
                 args[current_arg] = (void*)arg_copy;
                 current_arg = "";
@@ -72,7 +68,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
                 }
                 // else it's considered a file
                 else {
-                    char** files = (char**)args["files"];
+                    auto files = (char**)args["files"];
                     
                     // is this the first file?
                     if(files == nullptr) files = (char**)malloc(init_size * sizeof(char*));
@@ -98,7 +94,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
     // this flag won't log thanks to the loop's logic, so outside of it check if there is any flag and push it as "true"
     if(current_arg.size() > 0) args[current_arg] = (void*)&def_arg_value;
 
-    int* size_ptr = (int*)malloc(sizeof(int));
+    auto size_ptr = (int*)malloc(sizeof(int));
     *size_ptr = amt_files;
     args["files_size"] = size_ptr;
 
@@ -113,7 +109,7 @@ void cerne::CLI::event(std::string type, cerne::callback fnc) {
         int temp = 0;
         if(type == "files") temp = *(int*)this->__args["files_size"];
 
-        char** args = static_cast<char**>(this->__args[type]);
+        auto args = static_cast<char**>(this->__args[type]);
 
         std::visit([args, temp](auto&& arg) {
             using _type = std::decay_t<decltype(arg)>;
@@ -127,7 +123,7 @@ void cerne::CLI::event(std::string type, cerne::callback fnc) {
     }
 }
 
-void cerne::CLI::help() {
+void cerne::CLI::help() const {
     std::string logo = R"raw(
  ██████╗███████╗██████╗ ███╗   ██╗███████╗
 ██╔════╝██╔════╝██╔══██╗████╗  ██║██╔════╝

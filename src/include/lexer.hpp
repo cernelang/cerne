@@ -23,24 +23,24 @@ namespace cerne {
         NUMBER,
 
         // arithmetic
-        PLUS,           // +
-        MINUS,          // -
-        DIV,            // /
-        MUL,            // *
+        PLUS,
+        MINUS,
+        DIV,
+        MUL,
 
         // bit-related
-        BIT_AND,        // &
-        BIT_OR,         // |
-        BIT_XOR,        // ^
-        BIT_NOT,        // !
+        BIT_AND,
+        BIT_OR,
+        BIT_XOR,
+        BIT_NOT,
 
         // [], (), {}
-        START_INDEX,    // [
-        END_INDEX,      // ]
-        START_PARAM,    // (
-        END_PARAM,      // )
-        START_SCOPE,    // {
-        END_SCOPE,      // }
+        START_INDEX,
+        END_INDEX,
+        START_PARAM,
+        END_PARAM,
+        START_SCOPE,
+        END_SCOPE,
 
         // strings
         STRING,         // "" raw normal string
@@ -48,22 +48,22 @@ namespace cerne {
         SSTRING,        // `` used mainly with std.special (it holds a lot of metadata)
 
         // misc
-        COMMA,          // ,
-        DOT,            // .
+        COMMA,
+        DOT,
 
         // conjectures
         ARROW,
+        POWER,
         MEMBER_ACCESS,      // ::
-        START_RULE,         // #rule
-        START_MLC,          // /*
-        START_COMMENT       // //
+        START_RULE,         // #!rule
+        START_MLC,
+        START_COMMENT
     };
 
     typedef struct Token {
         TokenTypes type;
-        void* value;
-        size_t line;
-        size_t col;
+        std::unique_ptr<std::string> value;
+        Span span;
     } Token;
 
     const std::vector<std::string> keywords = {

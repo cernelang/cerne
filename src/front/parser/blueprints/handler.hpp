@@ -19,9 +19,9 @@ namespace cerne {
      * mnemonic blueprints return the amount of extra tokens read after offset
      * offset is the offset in which the mnemonic is localized in the token list
      */
-    typedef union {
-        std::unique_ptr<AST> ast;
-        tokenlist list;
+    typedef struct Blueprint_Arguments {
+        std::shared_ptr<AST> ast; 
+        const tokenlist& list;
         size_t offset;
     } blueprint_arguments;
 

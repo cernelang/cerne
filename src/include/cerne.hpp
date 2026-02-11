@@ -10,11 +10,12 @@
 #ifndef CERNE
 #define CERNE
 
-// cerne version update comes here for now
-const char* CERNE_VERSION = "v0.1.2";
-
+// cerne libraries (by component)
 #include "./utils.hpp"
 #include "./lexer.hpp"
 #include "./parser.hpp"
+
+// cerne version update comes here for now
+const char* CERNE_VERSION = "v0.1.3";
 
 #endif

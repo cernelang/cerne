@@ -8,10 +8,18 @@
     See the LICENSE file in the root directory for further details.
 */
 #include "../include/utils.hpp"
+#include "../include/lexer.hpp"
 
 void cerne::error(const char* src, const std::string& message, const std::string& code_snippet) {
     std::cout << FG "196;1m" << SIGNATURE << ' ' << src << ' ' << FG "255m" << message << '\n' << code_snippet << RESET << std::endl;
-    exit(1);
+}
+
+std::string cerne::code_snippet(const std::string_view& code, cerne::Span span) {
+    std::string snippet = "";
+
+    
+
+    return snippet;
 }
 
 // log with a time

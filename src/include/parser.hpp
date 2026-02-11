@@ -99,7 +99,7 @@ namespace cerne {
             ~AST()=default;
     };
 
-    std::unique_ptr<AST> parse(tokenlist list, const char* file_path, const args& options);
+    std::shared_ptr<AST> parse(const tokenlist& list, const char* file_path, const args& options);
 }
 
 #endif

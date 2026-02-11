@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
                 const char* file = files[i];
                 std::string code = cerne::readf(std::string(file));
                 const auto& tokens = cerne::lexer(std::string_view(code), file, args);
+                if(tokens.size() == 0) break;
                 std::cout << "Tokens: " << tokens.size() << std::endl;
                 const auto& ast = cerne::parse(tokens, file, args);
             }

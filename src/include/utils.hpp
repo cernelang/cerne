@@ -34,6 +34,12 @@
 
 // util injection in cerne namespace
 namespace cerne {
+    typedef struct Span {
+        size_t line;
+        size_t col;
+        size_t offset;
+        size_t length;
+    } Span;
     typedef std::map<std::string, void*> args;
     typedef std::variant<std::function<void()>, std::function<void(char**, int)>> callback;
 
@@ -41,6 +47,7 @@ namespace cerne {
     args parse_args(int argc, char** argv);
     void error(const char* where, const std::string& message, const std::string& code_snippet);
     void tlog(double time, const std::string& message);
+    std::string code_snippet(const std::string_view& code, Span span);
 
     class CLI {
         private:
@@ -48,12 +55,12 @@ namespace cerne {
 
         public:
             // constructor and destructor
-            CLI(const args& _args);
-            ~CLI();
+            CLI(const args& _args) : __args(_args) {};
+            ~CLI()=default;
 
             // others
             void event(std::string name, callback cb);
-            void help();
+            void help() const;
     };
 }
 
