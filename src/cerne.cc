@@ -22,6 +22,7 @@ int main(int argc, char** argv) {
                 std::string code = cerne::readf(std::string(file));
                 const auto& tokens = cerne::lexer(std::string_view(code), file, args);
                 std::cout << "Tokens: " << tokens.size() << std::endl;
+                const auto& ast = cerne::parse(tokens, file, args);
             }
         }
     });
