@@ -93,21 +93,23 @@ class LexerMachine {
          */
         bool string(char c) {
             if(is_string) {
-                if(symbols[c] == string_subtype) {
+                auto it = symbols.find(c);
+                if(it != symbols.end() && it->second == string_subtype) {
                     // create token for the string, push it and reset machine's string information for the next string
-                    auto token = cerne::Token{
-                        .type=string_subtype,
-                        .value=std::make_unique<std::string>(raw_str_content),
-                        .span=cerne::Span{
+                    auto token = cerne::Token(
+                        string_subtype,
+                        std::make_unique<std::string>(raw_str_content),
+                        cerne::Span{
                             .line=line,
                             .col=col-raw_str_content.size(),
                             .offset=offset,
                             .length=raw_str_content.size()
                         }
-                    };
+                    );
                     push(std::move(token));
                     is_string = false;
-                    raw_str_content = "";
+                    raw_str_content.clear();
+                    raw_str_content.shrink_to_fit();
                 } else raw_str_content += c;
 
                 return true;
@@ -139,16 +141,16 @@ class LexerMachine {
                 : cerne::TokenTypes::IDENTIFIER;
 
             // now push the token to our machine's token list
-            auto token = cerne::Token{
-                .type=type,
-                .value=std::make_unique<std::string>(word),
-                .span=cerne::Span{
+            auto token = cerne::Token(
+                type,
+                std::make_unique<std::string>(word),
+                cerne::Span{
                     .line=line,
                     .col=col,
                     .offset=offset,
                     .length=len
                 }
-            };
+            );
             push(std::move(token));
         }
 
@@ -175,16 +177,16 @@ class LexerMachine {
             offset--;
 
             // push number token to the machine's token list
-            auto token = cerne::Token{
-                .type=cerne::TokenTypes::NUMBER,
-                .value=std::make_unique<std::string>(number),
-                .span=cerne::Span{
+            auto token = cerne::Token(
+                cerne::TokenTypes::NUMBER,
+                std::make_unique<std::string>(number),
+                cerne::Span{
                     .line=line,
                     .col=col,
                     .offset=offset,
                     .length=len
-                },
-            };
+                }
+            );
 
             push(std::move(token));
         }
@@ -208,16 +210,16 @@ class LexerMachine {
 
                 // not a comment? push the token for the conjecture
                 default:
-                    auto token = cerne::Token{
-                        .type=conjecture_type,
-                        .value=nullptr,
-                        .span=cerne::Span{
+                    auto token = cerne::Token(
+                        conjecture_type,
+                        nullptr,
+                        cerne::Span{
                             .line=line,
                             .col=col,
                             .offset=offset,
                             .length=2
                         }
-                    };
+                    );
                     push(std::move(token));
             }
         }
@@ -236,16 +238,16 @@ class LexerMachine {
 
                 default:
                     // for any other symbol, just push to the token list
-                    auto token = cerne::Token{
-                        .type=symbol_type,
-                        .value=nullptr,
-                        .span=cerne::Span{
+                    auto token = cerne::Token(
+                        symbol_type,
+                        nullptr,
+                        cerne::Span{
                             .line=line,
                             .col=col,
                             .offset=offset,
                             .length=1
                         }
-                    };
+                    );
                     push(std::move(token));
             }
         }

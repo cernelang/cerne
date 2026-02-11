@@ -64,6 +64,18 @@ namespace cerne {
         TokenTypes type;
         std::unique_ptr<std::string> value;
         Span span;
+
+        // constructor and destructor
+        Token(TokenTypes t, std::unique_ptr<std::string> v, Span s) : type(t), value(std::move(v)), span(s) {};
+        ~Token()=default;
+
+        // move constructor and move assignment operator
+        Token(Token&&) noexcept = default;
+        Token& operator=(Token&&) noexcept = default;
+
+        // delete copy constructor and copy assignment operator to prevent accidental copying of tokens
+        Token(const Token&) = delete;
+        Token& operator=(const Token&) = delete;
     } Token;
 
     const std::vector<std::string> keywords = {
