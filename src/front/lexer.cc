@@ -9,6 +9,7 @@
 */
 #include "../include/lexer.hpp"
 
+/* --- GLOBAL MAPS --- */
 std::map<char, cerne::TokenTypes> symbols = {
     {'+', cerne::TokenTypes::PLUS},
     {'-', cerne::TokenTypes::MINUS},
@@ -22,6 +23,7 @@ std::map<char, cerne::TokenTypes> symbols = {
 
     {',', cerne::TokenTypes::COMMA},
     {'.', cerne::TokenTypes::DOT},
+    {';', cerne::TokenTypes::END},
 
     {'"', cerne::TokenTypes::STRING},
     {'\'', cerne::TokenTypes::FSTRING},
@@ -38,12 +40,15 @@ std::map<char, cerne::TokenTypes> symbols = {
 std::map<std::string, cerne::TokenTypes> conjectures = {
     {"->", cerne::TokenTypes::ARROW},
     {"**", cerne::TokenTypes::POWER},
+    {"<>", cerne::TokenTypes::UNPACK},
+    {"..", cerne::TokenTypes::RANGE},
     {"::", cerne::TokenTypes::MEMBER_ACCESS},
     {"#!", cerne::TokenTypes::START_RULE },
     {"/*", cerne::TokenTypes::START_MLC},
     {"//", cerne::TokenTypes::START_COMMENT}
 };
 
+/* --- SIMPLE LEXER MACHINE --- */
 class LexerMachine {
     public:
         std::vector<cerne::Token> tokens;
@@ -121,7 +126,7 @@ class LexerMachine {
         void word(char c) {
             // snatch the whole word (loop through ever character next to this one until it's not alnum or an underscore)
             std::string word = "";
-            size_t len = 0;
+            size_t len = 1;
 
             while((isalnum(c) || c == '_') && offset < code.size()) {
                 word += c;
@@ -146,9 +151,9 @@ class LexerMachine {
                 std::make_unique<std::string>(word),
                 cerne::Span{
                     .line=line,
-                    .col=col,
-                    .offset=offset,
-                    .length=len
+                    .col=col-len,
+                    .offset=offset-len,
+                    .length=len-1
                 }
             );
             push(std::move(token));
@@ -157,13 +162,32 @@ class LexerMachine {
         void number(char c) {
             // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
             std::string number = "";
-            size_t len = 0;
+            size_t len = 1;
+            bool error = false;
+            size_t error_at = 0;
+            uint8_t dots = 0;
 
             while((isdigit(c) || c == ',' || c == '.') && offset < code.size()) {
-                // if there already is a dot, error since multiple dots in a number is invalid
-                if(number.find('.') != std::string::npos) {
-                    cerne::error(file_path, "Multiple dots in number", "");
+                // if there already is a dot, we're probably dealing with a range, so break loop
+                if(c == '.' && (number.find('.') != std::string::npos)) {
+                    // it's a range
+                    if(number[number.size()-1] == '.' && dots <= 2) {
+                        number.pop_back();
+                        error=false;
+                        // decrement offset because we're trying to parse the range, which requires us to go back to the first dot
+                        offset--;
+                        break;
+                    } 
+
+                    // it's an error! too many dots in a number
+                    else if(!error) {
+                        error=true;
+                        error_at=len-1;
+                    }
                 }
+
+                // increment amount of dots
+                if(c == '.') dots++;
 
                 // , are just for style, they don't add any additional information to the number
                 if(c != ',') number += c;
@@ -173,19 +197,39 @@ class LexerMachine {
                 c = code[offset];
             }
 
-            // realign offset (explanation on another comment in the word check, since the number loop mechanism is the same)
+            // realign offset (explanation on another comment in the word check (word() function), since the number loop mechanism is the same)
             offset--;
+
+            const auto& span = cerne::Span{
+                .line=line,
+                .col=col-len,
+                .offset=offset-len,
+                .length=len
+            };
+
+            // display dots error message
+            if(error) {
+                const auto& err_at_span = cerne::Span{.line=span.line,.col=span.col+error_at,.offset=span.offset+error_at,.length=span.length};
+
+                cerne::cerror(
+                    file_path,
+                    2,
+                    "Too many dots in number",
+                    cerne::code_snippet(
+                        code,
+                        err_at_span,
+                        std::format("`{}` is not a valid number", number.substr(0, 32))
+                    ),
+                    err_at_span
+                );
+                return;
+            }
 
             // push number token to the machine's token list
             auto token = cerne::Token(
                 cerne::TokenTypes::NUMBER,
                 std::make_unique<std::string>(number),
-                cerne::Span{
-                    .line=line,
-                    .col=col,
-                    .offset=offset,
-                    .length=len
-                }
+                span
             );
 
             push(std::move(token));
@@ -215,8 +259,8 @@ class LexerMachine {
                         nullptr,
                         cerne::Span{
                             .line=line,
-                            .col=col,
-                            .offset=offset,
+                            .col=col-1,
+                            .offset=offset-1,
                             .length=2
                         }
                     );
@@ -292,16 +336,20 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                 continue;
             } 
             // unexpected character (should ignore whitespaces)
-            else if(!isspace(c) && !options.contains("nodebug")) { 
-                cerne::error(
+            else if(!isspace(c) && !(options.flags.find("quiet") != options.flags.end())) { 
+                const auto& _cerr_span = cerne::Span{
+                    .line=machine->line,
+                    .col=machine->col,
+                    .offset=machine->offset,
+                    .length=1
+                };
+
+                cerne::cerror(
                     file_path, 
+                    1,
                     std::format("Unexpected symbol `{}` at {}:{}", c, machine->line, machine->col), 
-                    cerne::code_snippet(code, cerne::Span{
-                        .line=machine->line,
-                        .col=machine->col,
-                        .offset=machine->offset,
-                        .length=1
-                    })
+                    cerne::code_snippet(code, _cerr_span, "Unexpected symbol here"),
+                    _cerr_span
                 );
                 return {};
             }

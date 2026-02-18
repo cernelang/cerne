@@ -9,8 +9,9 @@
 */
 #include "handler.hpp"
 
-size_t cerne::Return(const cerne::blueprint_arguments& args) {
-    size_t surplus = 0;
+void cerne::Return(const cerne::blueprint_arguments& args) {
+    const auto& machine = args.machine;
 
-    return surplus;
+    machine->offset++;
+    if(machine->check_eof("`expr`")) return;
 }

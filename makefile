@@ -6,7 +6,7 @@
 #   This file is part of the Cerne Compiler, licensed under LGPL-3.0.
 #   See the LICENSE file in the root directory for details.
 CXX := g++
-CXXFLAGS := -std=c++20 -Wall -Wextra -g -O2 -I./src/include
+CXXFLAGS := -std=c++20 -Wall -Wextra -g -O2 -I./src/include # -fsanitize=address,undefined
 SRC := ./src/
 SRCS := $(shell find $(SRC_DIR) -name "*.cc")
 TARGET := ./cerne

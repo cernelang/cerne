@@ -21,7 +21,7 @@ std::string cerne::readf(const std::string& path) {
         file.close();
     } else {
         // error handling
-        cerne::error("[cli]", std::format("This file ({}) does NOT exit.", path), "");
+        cerne::error("[cli]", std::format("This file ({}) does NOT exit.", path));
     }
 
     return content;

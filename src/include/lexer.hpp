@@ -12,8 +12,6 @@
 
 #include "utils.hpp"
 
-#include<string_view>
-
 namespace cerne {
     enum class TokenTypes {
         // words & numbers
@@ -50,14 +48,61 @@ namespace cerne {
         // misc
         COMMA,
         DOT,
+        END,
 
         // conjectures
         ARROW,
         POWER,
+        UNPACK,             // <>
+        RANGE,              // ..
         MEMBER_ACCESS,      // ::
         START_RULE,         // #!rule
         START_MLC,
-        START_COMMENT
+        START_COMMENT,
+
+        // reserved
+        _EOF
+    };
+
+    const std::map<TokenTypes, std::string> TokenTypeNames = {
+        { TokenTypes::IDENTIFIER, "Identifier" },
+        { TokenTypes::MNEMONIC, "Mnemonic" },
+        { TokenTypes::REGISTER, "Register" },
+        { TokenTypes::NUMBER, "Number" },
+
+        { TokenTypes::PLUS, "Plus" },
+        { TokenTypes::MINUS, "Minus" },
+        { TokenTypes::DIV, "Div" },
+        { TokenTypes::MUL, "Mul" },
+        
+        { TokenTypes::BIT_AND, "BitAnd" },
+        { TokenTypes::BIT_OR, "BitOr" },
+        { TokenTypes::BIT_XOR, "BitXor" },
+        { TokenTypes::BIT_NOT, "BitNot" },
+        
+        { TokenTypes::START_INDEX, "StartIndex" },
+        { TokenTypes::END_INDEX, "EndIndex" },
+        { TokenTypes::START_PARAM, "StartParam" },
+        { TokenTypes::END_PARAM, "EndParam" },
+        { TokenTypes::START_SCOPE, "StartScope" },
+        { TokenTypes::END_SCOPE, "EndScope" },
+
+        { TokenTypes::STRING, "String" },
+        { TokenTypes::FSTRING, "FormattedString" },
+        { TokenTypes::SSTRING, "SpecialString" },
+
+        { TokenTypes::COMMA, "Comma" },
+        { TokenTypes::DOT, "Dot" },
+        { TokenTypes::END, "End" },
+
+        { TokenTypes::ARROW, "Arrow" },
+        { TokenTypes::POWER, "Power" },
+        { TokenTypes::UNPACK, "Unpack" },
+        { TokenTypes::RANGE, "Range" },
+        { TokenTypes::MEMBER_ACCESS, "MemberAccess" },
+        { TokenTypes::START_RULE, "StartRule" },
+        { TokenTypes::START_MLC, "StartMLC" },
+        { TokenTypes::START_COMMENT, "StartComment" },
     };
 
     typedef struct Token {

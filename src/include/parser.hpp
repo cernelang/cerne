@@ -74,6 +74,14 @@ namespace cerne {
             ~BinaryExpr()=default;
     };
 
+    class FunNode : public Node {
+        public:
+            FunNode()=default;
+            ~FunNode()=default;
+
+            
+    };
+
     class Program : public Node {
         private:
             // body of nodes
@@ -95,11 +103,48 @@ namespace cerne {
             // for Diag
             const char* file_path;
         public: 
-            AST()=default;
+            size_t errors;
+            size_t warnings;
+
+            AST(const char* path): file_path(path) {};
             ~AST()=default;
     };
 
-    std::shared_ptr<AST> parse(const tokenlist& list, const char* file_path, const args& options);
+    class ParseMachine {
+        public:
+            size_t offset = 0;
+            size_t errors = 0;
+            size_t warnings = 0;
+            size_t scope = 0;
+            cerne::AST* ast;
+            const cerne::tokenlist& list;
+            const char* file_path;
+            const cerne::args& options;
+            const std::string_view& code_sv;
+
+            ParseMachine(
+                cerne::AST* _ast, 
+                const cerne::tokenlist& _list, 
+                const char* _file_path, 
+                const cerne::args& _options,
+                const std::string_view& _code_sv
+            )
+                : ast(_ast), list(_list), file_path(_file_path), options(_options), code_sv(_code_sv) {};
+            ~ParseMachine()=default;
+
+            // checks
+            bool check_eof(const std::string_view& expected);
+
+            // subparse methods
+            void parse_mnemonic();
+            void parse_parameter();
+            void parse_expr(size_t precedence);
+            void parse(const cerne::Token& token);
+            void walk();
+    };
+
+    [[nodiscard]] constexpr size_t get_score(TokenTypes type) noexcept;
+    std::unique_ptr<AST> parse(const std::string_view& code_sv, const tokenlist& list, const char* file_path, const args& options);
 }
 
 #endif

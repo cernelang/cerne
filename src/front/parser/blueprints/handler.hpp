@@ -20,13 +20,11 @@ namespace cerne {
      * offset is the offset in which the mnemonic is localized in the token list
      */
     typedef struct Blueprint_Arguments {
-        std::shared_ptr<AST> ast; 
-        const tokenlist& list;
-        size_t offset;
+        cerne::ParseMachine* machine;
     } blueprint_arguments;
 
-    size_t Fun(const blueprint_arguments& args);
-    size_t Return(const blueprint_arguments& args);
+    void Fun(const blueprint_arguments& args);
+    void Return(const blueprint_arguments& args);
 }
 
 #endif

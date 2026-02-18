@@ -16,6 +16,6 @@
 #include "./parser.hpp"
 
 // cerne version update comes here for now
-const char* CERNE_VERSION = "v0.1.3";
+const char* CERNE_VERSION = "v0.1.4";
 
 #endif
