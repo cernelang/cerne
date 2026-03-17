@@ -34,6 +34,12 @@
 #include<memory>
 #include<cmath>
 
+// error codes
+#define ERR_UNEXPECTED_SYMBOL   1
+#define ERR_TOO_MANY_DOTS       2
+#define ERR_UNEXPECTED_TOKEN    3
+#define ERR_UNKNOWN_KEYWORD     4
+
 // util injection in cerne namespace
 namespace cerne {
     
@@ -82,7 +88,8 @@ namespace cerne {
     
     // misc utils
     std::string readf(const std::string& path);
-    args parse_args(int argc, char** argv);    
+    args parse_args(int argc, char** argv);
+    std::string json(void* AST);
 }
 
 #endif

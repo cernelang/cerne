@@ -24,14 +24,18 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
     // check EOF
     if(machine->check_eof("Identifier")) return;
 
-    //  identifier
+    // identifier
     const auto& id = list[machine->offset];
-    if(id.type != cerne::TokenTypes::IDENTIFIER) {
+    if(id.type != cerne::TokenTypes::IDENTIFIER && machine->options.flags.find("quiet") == machine->options.flags.end()) {
         cerne::cerror(
             machine->file_path, 
-            2,
+            ERR_UNEXPECTED_TOKEN,
             std::format("Expected Identifier, instead got {} at {}:{}", cerne::TokenTypeNames.at(id.type), id.span.line, id.span.col), 
-            "",
+            cerne::code_snippet(
+                machine->code_sv,
+                id.span,
+                std::format("`{}` is not a valid function name.", *(id.value))
+            ),
             id.span
         );
         machine->offset++;
@@ -47,13 +51,17 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
 
     // now we parse the parameters, which start with a START_PARAM token and end with an END_PARAM, separated by a COMMA token.
     const auto& start_param = list[machine->offset];
-    if(start_param.type != cerne::TokenTypes::START_PARAM) {
+    if(start_param.type != cerne::TokenTypes::START_PARAM  && machine->options.flags.find("quiet") == machine->options.flags.end()) {
         cerne::cerror(
             machine->file_path, 
-            2,
+            ERR_UNEXPECTED_TOKEN,
             std::format("Expected a `(`, instead got `{}` at {}:{}", cerne::TokenTypeNames.at(start_param.type), start_param.span.line, start_param.span.col), 
-            "",
-            id.span
+            cerne::code_snippet(
+                machine->code_sv,
+                start_param.span,
+                std::format("`{}` is not a valid start of function parameters.", cerne::TokenTypeNames.at(start_param.type))
+            ),
+            start_param.span
         );
         machine->errors++;
         return;
@@ -62,9 +70,39 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
     // increment again and start parsing parameters until a comma (or an END_PARAM) hits
     machine->offset++;
 
-    const auto& current_token = list[machine->offset];
-    while(current_token.type != cerne::TokenTypes::END_PARAM) {
-        machine->parse_parameter();
-        machine->offset++;
+    std::vector<std::unique_ptr<Parameter>> parameters;
+    while(list[machine->offset].type != cerne::TokenTypes::END_PARAM && machine->offset < machine->list.size()) {
+        parameters.push_back(machine->parse_parameter());
     }
+
+    machine->offset++;
+
+    if(machine->check_eof("{")) return;
+
+    // make a default type (void)
+    auto fun_type = std::make_unique<Type>(
+        TypeData::PRIMITIVE,
+        false,
+        false,
+        Primitive::Void,
+        nullptr
+    );
+
+    // check if explicit return type is provided (if there is an arrow)
+    const auto& arrow = list[machine->offset];
+    if(arrow.type == cerne::TokenTypes::ARROW) {
+        machine->offset++;
+        fun_type = machine->parse_type(false);
+    }
+
+    // create the function node and push it to the AST
+    auto fun = std::make_unique<cerne::FunNode>(
+        id.span,
+        std::move(parameters),
+        std::make_unique<Scope>(),
+        std::move(fun_type),
+        *id.value.get()
+    );
+
+    machine->ast->root->node_list.push_back(std::move(fun));
 }

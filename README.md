@@ -1,5 +1,5 @@
 # Cerne
-![cerne_banner](https://media.discordapp.net/attachments/956500215844724736/1470099461639504033/image.png?ex=698a1050&is=6988bed0&hm=710cfa45c36bed9ebac7c21632104a2e9d695cf4bc940966e0e11158448edf6b&=&format=webp&quality=lossless)
+![cerne_banner](docs/assets/cerne_banner_large.png)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kashiexe_cerne&metric=alert_status&token=9ff1139a37cd8f9552836b0515523f90b30a571a)](https://sonarcloud.io/summary/new_code?id=kashiexe_cerne)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=kashiexe_cerne&metric=reliability_rating&token=9ff1139a37cd8f9552836b0515523f90b30a571a)](https://sonarcloud.io/summary/new_code?id=kashiexe_cerne)

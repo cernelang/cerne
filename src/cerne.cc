@@ -20,7 +20,7 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
         const auto& code_sv = std::string_view(code);
         
         // now we pass it through the lexer
-        const auto& tokens = cerne::lexer(code_sv, file, args);
+        auto tokens = cerne::lexer(code_sv, file, args);
         if(tokens.size() == 0) break;
         if(args.flags.find("debug") != args.flags.end()) {
             cerne::debug(std::format("Tokens -> {}", tokens.size()));
@@ -33,6 +33,19 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
         if(ast->errors > 0) {
             cerne::error(file, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
             break;
+        }
+
+        // ast diagnostics
+        if(args.flags.find("print_ast") != args.flags.end()) {
+            std::cout << cerne::json(ast.get()) << std::endl;
+        }
+
+        if(args.flags.find("ast_dump") != args.flags.end()) {
+            std::string dump_path = std::string(file) + ".ast.json";
+            std::ofstream dump_file(dump_path);
+            dump_file << cerne::json(ast.get());
+            dump_file.close();
+            std::cout << "AST dumped to " << dump_path << std::endl;
         }
     }
 }
@@ -51,7 +64,7 @@ int main(int argc, char** argv) {
     });
 
     cli->event("version", []() {
-        std::cout << "Cerne is running on version: " << CERNE_VERSION << std::endl;
+        std::cout << "Cerne is running on version: v" << CERNE_VERSION.alpha << "." << CERNE_VERSION.major << "." << CERNE_VERSION.minor << std::endl;
     });
 
     return 0;

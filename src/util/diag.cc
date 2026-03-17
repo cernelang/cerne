@@ -25,9 +25,14 @@ void cerne::error(const char* src, const std::string& message) {
  */
 void cerne::cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const cerne::Span& span) {
     // print appropriate error message
-    size_t digits = std::log10(errcode) + 1;
-
-    std::cerr << FG "196;1m" << "[CNE" << std::string(4-digits, '0') << errcode << "]" << 
+    std::cerr << 
+    std::format(
+        "{}[{}{}{}]", 
+        FG "196;1m", 
+        std::format("{}]8;;https://docs.cerne.space/errors#code_{}{}", ESC, errcode, "\x07"),
+        std::format("CNE{:04d}", errcode),
+        ESC "]8;;" "\x07" RESET FG "196;1m"
+    ) << 
     FG "255m" << ':' << ' ' << message << '\n' << '\n' <<
     FG "219;1m" << src << ':' << span.line << ":" << span.col << FG "255m" << '\n' <<
     code_snippet << 

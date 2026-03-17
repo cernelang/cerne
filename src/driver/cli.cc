@@ -88,7 +88,7 @@ void cerne::CLI::event(std::string type, cerne::callback fnc) {
     const auto& flags = args.flags;
     const auto& files = args.files;
 
-    std::visit([flags, files, type](auto&& new_fnc) {
+    std::visit([&flags, &files, &type](auto&& new_fnc) {
         using fnc_stripped = std::decay_t<decltype(new_fnc)>;
 
         if constexpr (std::is_invocable_v<fnc_stripped, std::vector<std::string>>) {
@@ -129,6 +129,6 @@ void cerne::CLI::help() const {
     FG "223;24m" << "> " << FG "195m" << "version" << FG "255m" << " - shows the current version of the compiler\n\n" <<
     
     // signature from me (kashi [quick side note - this is an alias, not my real name]) and a link to the website
-    FG "153;1m" << "Created by Kashi" << FG "237m" << " | " << FG "122;1m" << "https://cerne.dev" <<
+    FG "153;1m" << "Created by Kashi" << FG "237m" << " | " << FG "122;1m" << "https://cerne.space" <<
     RESET << std::endl;
 }

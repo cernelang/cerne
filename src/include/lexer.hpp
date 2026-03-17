@@ -13,6 +13,9 @@
 #include "utils.hpp"
 
 namespace cerne {
+    /**
+     * All token types in cerne
+     */
     enum class TokenTypes {
         // words & numbers
         IDENTIFIER,
@@ -27,10 +30,14 @@ namespace cerne {
         MUL,
 
         // bit-related
-        BIT_AND,
-        BIT_OR,
-        BIT_XOR,
-        BIT_NOT,
+        BIT_AND,        // &
+        BIT_OR,         // |
+        BIT_XOR,        // ^
+        BIT_NOT,        // !
+
+        // compairison operators
+        GREATER_THAN,   // <
+        LESS_THAN,      // >
 
         // [], (), {}
         START_INDEX,
@@ -49,6 +56,7 @@ namespace cerne {
         COMMA,
         DOT,
         END,
+        DEFINE,
 
         // conjectures
         ARROW,
@@ -59,11 +67,23 @@ namespace cerne {
         START_RULE,         // #!rule
         START_MLC,
         START_COMMENT,
+        LEFT_SHIFT,         // <<
+        RIGHT_SHIFT,        // >>
+        GREATER_EQUAL,      // >=
+        LESS_EQUAL,         // <=
+        EQUAL,              // ==
+        NOT_EQUAL,          // !=
+        PIPELINE,           // |>
+        OR,                 // ||
+        AND,                // &&
 
         // reserved
         _EOF
     };
 
+    /**
+     * Convert token types to their string representation
+     */
     const std::map<TokenTypes, std::string> TokenTypeNames = {
         { TokenTypes::IDENTIFIER, "Identifier" },
         { TokenTypes::MNEMONIC, "Mnemonic" },
@@ -79,6 +99,9 @@ namespace cerne {
         { TokenTypes::BIT_OR, "BitOr" },
         { TokenTypes::BIT_XOR, "BitXor" },
         { TokenTypes::BIT_NOT, "BitNot" },
+
+        { TokenTypes::GREATER_THAN, "GreaterThan" },
+        { TokenTypes::LESS_THAN, "LessThan" },
         
         { TokenTypes::START_INDEX, "StartIndex" },
         { TokenTypes::END_INDEX, "EndIndex" },
@@ -94,6 +117,7 @@ namespace cerne {
         { TokenTypes::COMMA, "Comma" },
         { TokenTypes::DOT, "Dot" },
         { TokenTypes::END, "End" },
+        { TokenTypes::DEFINE, "Define" },
 
         { TokenTypes::ARROW, "Arrow" },
         { TokenTypes::POWER, "Power" },
@@ -103,6 +127,34 @@ namespace cerne {
         { TokenTypes::START_RULE, "StartRule" },
         { TokenTypes::START_MLC, "StartMLC" },
         { TokenTypes::START_COMMENT, "StartComment" },
+        { TokenTypes::LEFT_SHIFT, "LeftShift" },
+        { TokenTypes::RIGHT_SHIFT, "RightShift" },
+        { TokenTypes::GREATER_EQUAL, "GreaterEqual" },
+        { TokenTypes::LESS_EQUAL, "LessEqual" },
+        { TokenTypes::EQUAL, "Equal" },
+        { TokenTypes::NOT_EQUAL, "NotEqual" },
+        { TokenTypes::PIPELINE, "Pipeline" },
+        { TokenTypes::OR, "Or" },
+        { TokenTypes::AND, "And" },
+
+        { TokenTypes::_EOF, "EOF" }
+    };
+
+    /**
+     * Allowed unary operators
+     */
+    const std::vector<TokenTypes> unary = {
+        TokenTypes::MINUS,      // unary minus
+        TokenTypes::BIT_NOT,    // negation
+        TokenTypes::MUL,        // pointers
+        TokenTypes::BIT_AND     // reference
+    };
+
+    /**
+     * Right associative operators (for pratt parsing)
+     */
+    const std::vector<TokenTypes> right_associative = {
+        TokenTypes::POWER
     };
 
     typedef struct Token {

@@ -10,7 +10,7 @@
 #include "../include/lexer.hpp"
 
 /* --- GLOBAL MAPS --- */
-std::map<char, cerne::TokenTypes> symbols = {
+const std::map<char, cerne::TokenTypes> symbols = {
     {'+', cerne::TokenTypes::PLUS},
     {'-', cerne::TokenTypes::MINUS},
     {'/', cerne::TokenTypes::DIV},
@@ -21,9 +21,14 @@ std::map<char, cerne::TokenTypes> symbols = {
     {'^', cerne::TokenTypes::BIT_XOR},
     {'!', cerne::TokenTypes::BIT_NOT},
 
+    {'<', cerne::TokenTypes::LESS_THAN},
+    {'>', cerne::TokenTypes::GREATER_THAN},
+
     {',', cerne::TokenTypes::COMMA},
     {'.', cerne::TokenTypes::DOT},
     {';', cerne::TokenTypes::END},
+    {'\n', cerne::TokenTypes::END},
+    {':', cerne::TokenTypes::DEFINE},
 
     {'"', cerne::TokenTypes::STRING},
     {'\'', cerne::TokenTypes::FSTRING},
@@ -37,7 +42,7 @@ std::map<char, cerne::TokenTypes> symbols = {
     {'}', cerne::TokenTypes::END_SCOPE}
 };
 
-std::map<std::string, cerne::TokenTypes> conjectures = {
+const std::map<std::string, cerne::TokenTypes> conjectures = {
     {"->", cerne::TokenTypes::ARROW},
     {"**", cerne::TokenTypes::POWER},
     {"<>", cerne::TokenTypes::UNPACK},
@@ -45,7 +50,16 @@ std::map<std::string, cerne::TokenTypes> conjectures = {
     {"::", cerne::TokenTypes::MEMBER_ACCESS},
     {"#!", cerne::TokenTypes::START_RULE },
     {"/*", cerne::TokenTypes::START_MLC},
-    {"//", cerne::TokenTypes::START_COMMENT}
+    {"//", cerne::TokenTypes::START_COMMENT},
+    {"<<", cerne::TokenTypes::LEFT_SHIFT},
+    {">>", cerne::TokenTypes::RIGHT_SHIFT},
+    {">=", cerne::TokenTypes::GREATER_EQUAL},
+    {"<=", cerne::TokenTypes::LESS_EQUAL},
+    {"==", cerne::TokenTypes::EQUAL},
+    {"!=", cerne::TokenTypes::NOT_EQUAL},
+    {"|>", cerne::TokenTypes::PIPELINE},
+    {"||", cerne::TokenTypes::OR},
+    {"&&", cerne::TokenTypes::AND}
 };
 
 /* --- SIMPLE LEXER MACHINE --- */
@@ -138,6 +152,8 @@ class LexerMachine {
 
             // the outer for loop will perform another offset++ after this iteration ends, since it ends at the first non-variable character for word (which could be whitespace or a symbol), the outer offset++ will skip that character, which can be valuable for a statement.
             offset--;
+            col--;
+            len--;
 
             // to get the type, we first check if the word is in keywords, then registers, and if it's in neither then it's an IDENTIFIER
             auto type = 
@@ -153,7 +169,7 @@ class LexerMachine {
                     .line=line,
                     .col=col-len,
                     .offset=offset-len,
-                    .length=len-1
+                    .length=len
                 }
             );
             push(std::move(token));
@@ -199,6 +215,8 @@ class LexerMachine {
 
             // realign offset (explanation on another comment in the word check (word() function), since the number loop mechanism is the same)
             offset--;
+            col--;
+            len--;
 
             const auto& span = cerne::Span{
                 .line=line,
@@ -213,7 +231,7 @@ class LexerMachine {
 
                 cerne::cerror(
                     file_path,
-                    2,
+                    ERR_TOO_MANY_DOTS,
                     "Too many dots in number",
                     cerne::code_snippet(
                         code,
@@ -240,7 +258,7 @@ class LexerMachine {
             offset++;
 
             // get the conjecture type and in case it's a comment, set the respective comment type to true in the machine
-            auto conjecture_type = conjectures[possible_conjecture];
+            auto conjecture_type = conjectures.at(possible_conjecture);
             switch(conjecture_type) {
                 // one liner
                 case cerne::TokenTypes::START_COMMENT:
@@ -269,7 +287,7 @@ class LexerMachine {
         }
 
         void symbol(char c) {
-            auto symbol_type = symbols[c];
+            auto symbol_type = symbols.at(c);
 
             switch(symbol_type) {
                 // activate string collection (with subtype for metadata)
@@ -346,7 +364,7 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
 
                 cerne::cerror(
                     file_path, 
-                    1,
+                    ERR_UNEXPECTED_SYMBOL,
                     std::format("Unexpected symbol `{}` at {}:{}", c, machine->line, machine->col), 
                     cerne::code_snippet(code, _cerr_span, "Unexpected symbol here"),
                     _cerr_span
