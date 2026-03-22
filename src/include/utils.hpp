@@ -39,6 +39,7 @@
 #define ERR_TOO_MANY_DOTS       2
 #define ERR_UNEXPECTED_TOKEN    3
 #define ERR_UNKNOWN_KEYWORD     4
+#define ERR_OPEN_SCOPE          5
 
 // util injection in cerne namespace
 namespace cerne {

@@ -45,7 +45,8 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
             std::ofstream dump_file(dump_path);
             dump_file << cerne::json(ast.get());
             dump_file.close();
-            std::cout << "AST dumped to " << dump_path << std::endl;
+
+            cerne::debug(std::format("AST dumped to {}", dump_path));
         }
     }
 }

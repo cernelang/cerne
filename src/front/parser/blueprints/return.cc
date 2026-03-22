@@ -14,11 +14,11 @@
  * return <expr>,<expr>... <end>
  * so we loop until there's an end token, parse the expressions in between and push them into the returnstmt node and push to the AST
  */
-void cerne::Return(const cerne::blueprint_arguments& args) {
+std::unique_ptr<cerne::Node> cerne::Return(const cerne::blueprint_arguments& args) {
     const auto& machine = args.machine;
 
     machine->offset++;
-    if(machine->check_eof("`expr`")) return;
+    if(machine->check_eof("`expr`")) return nullptr;
 
     const auto& token = machine->list[machine->offset];
 
@@ -47,5 +47,5 @@ void cerne::Return(const cerne::blueprint_arguments& args) {
         }
     }
 
-    machine->ast->root->node_list.push_back(std::move(return_node));
+    return return_node;
 }

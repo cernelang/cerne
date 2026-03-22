@@ -15,14 +15,14 @@
  * 
  * if no arrow and return type are provided, the return type is set to void by default
  */
-void cerne::Fun(const cerne::blueprint_arguments& args) {
+std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) {
     // store the token list and offset
     const auto& machine = args.machine;
     const auto& list = machine->list;
     machine->offset++;
 
     // check EOF
-    if(machine->check_eof("Identifier")) return;
+    if(machine->check_eof("Identifier")) return nullptr;
 
     // identifier
     const auto& id = list[machine->offset];
@@ -40,14 +40,14 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
         );
         machine->offset++;
         machine->errors++;
-        return;
+        return nullptr;
     }
 
     // increment and get to the next expected token
     machine->offset++;
 
     // check EOF
-    if(machine->check_eof("`(`")) return;
+    if(machine->check_eof("`(`")) return nullptr;
 
     // now we parse the parameters, which start with a START_PARAM token and end with an END_PARAM, separated by a COMMA token.
     const auto& start_param = list[machine->offset];
@@ -64,7 +64,7 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
             start_param.span
         );
         machine->errors++;
-        return;
+        return nullptr;
     }
 
     // increment again and start parsing parameters until a comma (or an END_PARAM) hits
@@ -77,7 +77,7 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
 
     machine->offset++;
 
-    if(machine->check_eof("{")) return;
+    if(machine->check_eof("{")) return nullptr;
 
     // make a default type (void)
     auto fun_type = std::make_unique<Type>(
@@ -95,14 +95,35 @@ void cerne::Fun(const cerne::blueprint_arguments& args) {
         fun_type = machine->parse_type(false);
     }
 
+    // now it should parse the scope
+    const auto& begin_scope = list[machine->offset];
+    auto scope = std::make_unique<Scope>();
+    if(begin_scope.type == cerne::TokenTypes::START_SCOPE) {
+        scope = std::move(machine->parse_scope());
+    } else {
+        cerne::cerror(
+            machine->file_path, 
+            ERR_UNEXPECTED_TOKEN,
+            std::format("Expected `{{`, instead got `{}` at {}:{}", cerne::TokenTypeNames.at(begin_scope.type), begin_scope.span.line, begin_scope.span.col), 
+            cerne::code_snippet(
+                machine->code_sv,
+                begin_scope.span,
+                std::format("`{}` is not a valid start of function body.", cerne::TokenTypeNames.at(begin_scope.type))
+            ),
+            begin_scope.span
+        );
+        machine->errors++;
+        return nullptr;
+    }
+
     // create the function node and push it to the AST
     auto fun = std::make_unique<cerne::FunNode>(
         id.span,
         std::move(parameters),
-        std::make_unique<Scope>(),
+        std::move(scope),
         std::move(fun_type),
         *id.value.get()
     );
 
-    machine->ast->root->node_list.push_back(std::move(fun));
+    return fun;
 }

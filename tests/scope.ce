@@ -1,0 +1,16 @@
+{
+    return a+b
+    {
+        {
+            return 1
+        }
+    }
+}
+
+fun a() -> i32 {
+    {
+        {
+            return 2
+        }
+    }
+}

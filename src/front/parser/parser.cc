@@ -10,9 +10,9 @@
 #include "../include/parser.hpp"
 #include "blueprints/handler.hpp"
 
-const std::map<std::string, std::function<void(const cerne::blueprint_arguments&)>> blueprints = {
-    { "return", static_cast<void(*)(const cerne::blueprint_arguments&)>(cerne::Return) },
-    { "fun", static_cast<void(*)(const cerne::blueprint_arguments&)>(cerne::Fun) }
+const std::map<std::string, std::function<std::unique_ptr<cerne::Node>(const cerne::blueprint_arguments&)>> blueprints = {
+    { "return", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Return) },
+    { "fun", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Fun) }
 };
 
 /* --- Parse Machine Methods Begin --- */
@@ -38,7 +38,7 @@ bool cerne::ParseMachine::check_eof(const std::string_view& expected) {
 /**
  * Execute mnemonic blueprint
  */
-void cerne::ParseMachine::parse_mnemonic() {
+std::unique_ptr<cerne::Node>  cerne::ParseMachine::parse_mnemonic() {
     const auto& token = list[offset];
     std::string token_name = std::string(token.value.get()->c_str());
     if(blueprints.find(token_name) != blueprints.end()) {
@@ -46,7 +46,7 @@ void cerne::ParseMachine::parse_mnemonic() {
             .machine=this
         };
 
-        blueprints.at(token_name)(arguments);
+        return blueprints.at(token_name)(arguments);
     } else {
         cerne::cerror(
             file_path, 
@@ -57,13 +57,42 @@ void cerne::ParseMachine::parse_mnemonic() {
         );
         errors++;
     }
+    return nullptr;
 }
 
 /**
  * Subparse method responsible for parsing a scope
  */
 std::unique_ptr<cerne::Scope> cerne::ParseMachine::parse_scope() {
-    return std::make_unique<cerne::Scope>();
+    auto& start_token = list[offset];
+    offset++;
+
+    auto scope = std::make_unique<cerne::Scope>();
+
+    // parse everything until end of scope
+    while(list[offset].type != TokenTypes::END_SCOPE && offset < list.size()) {
+        auto node = parse(list[offset]);
+        if(node) scope->body.push_back(std::move(node));
+        offset++;
+    }
+    
+    // if file ended without closing scope
+    if(list[offset].type != TokenTypes::END_SCOPE && offset >= list.size() && options.flags.find("quiet") == options.flags.end()) {
+        cerne::cerror(
+            file_path,
+            ERR_OPEN_SCOPE,
+            std::format("Syntax Error: Unclosed scope. Expected {}'}}'{} to match the opening brace.", BG "219m" FG "233m", RESET ESC "[1;37m"),
+            cerne::code_snippet(
+                code_sv,
+                start_token.span,
+                "Scope begins here without closure (no matching '}' for this '{')"
+            ),
+            start_token.span
+        );
+        errors++;
+    }
+
+    return scope;
 }
 
 // parse_type utils
@@ -356,24 +385,27 @@ std::unique_ptr<cerne::Parameter> cerne::ParseMachine::parse_parameter() {
 /**
  * Global parse function, executes appropriate function depending on the current token
  */
-void cerne::ParseMachine::parse(cerne::Token& token) {
+std::unique_ptr<cerne::Node> cerne::ParseMachine::parse(cerne::Token& token) {
     switch(token.type) {
         case cerne::TokenTypes::MNEMONIC: 
-            parse_mnemonic();
-            break;
+            return parse_mnemonic();
+
+        case cerne::TokenTypes::START_SCOPE:
+            return parse_scope();
 
         default:
             // how?? 
             break;
     }
 
-    return;
+    return nullptr;
 }
 
 void cerne::ParseMachine::walk() {
     for(; offset < list.size(); offset++) {
         auto& token = list[offset];
-        parse(token);
+        auto node = parse(token);
+        if(node) ast->root->node_list.push_back(std::move(node));
     }
 }
 

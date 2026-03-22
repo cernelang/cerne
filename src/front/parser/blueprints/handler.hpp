@@ -23,8 +23,8 @@ namespace cerne {
         cerne::ParseMachine* machine;
     } blueprint_arguments;
 
-    void Fun(const blueprint_arguments& args);
-    void Return(const blueprint_arguments& args);
+    std::unique_ptr<cerne::Node> Fun(const blueprint_arguments& args);
+    std::unique_ptr<cerne::Node> Return(const blueprint_arguments& args);
 }
 
 #endif
