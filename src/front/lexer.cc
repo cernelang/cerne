@@ -28,6 +28,7 @@ const std::map<char, cerne::TokenTypes> symbols = {
     {'.', cerne::TokenTypes::DOT},
     {';', cerne::TokenTypes::END},
     {'\n', cerne::TokenTypes::END},
+    {'=', cerne::TokenTypes::EQU},
     {':', cerne::TokenTypes::DEFINE},
 
     {'"', cerne::TokenTypes::STRING},
@@ -305,7 +306,7 @@ class LexerMachine {
                         nullptr,
                         cerne::Span{
                             .line=line,
-                            .col=col,
+                            .col=col-1,
                             .offset=offset,
                             .length=1
                         }

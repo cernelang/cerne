@@ -7,7 +7,7 @@
     This file is part of the Cerne Compiler.
     See the LICENSE file in the root directory for further details.
 */
-#include "handler.hpp"
+#include "../../../include/parser/handler.hpp"
 
 /**
  * Return statements are just
@@ -18,7 +18,23 @@ std::unique_ptr<cerne::Node> cerne::Return(const cerne::blueprint_arguments& arg
     const auto& machine = args.machine;
 
     machine->offset++;
-    if(machine->check_eof("`expr`")) return nullptr;
+    if(machine->is_eof()) {
+        cerne::cerror(
+            machine->file_path,
+            ERR_UNEXPECTED_EOF,
+            "Expected an expression after `return`, but reached end of file.",
+            "EOF",
+            Span{
+                .line = 0,
+                .col = 0,
+                .offset = machine->code_sv.size(),
+                .length = 0
+            }
+        );
+        machine->skip_to_next_end();
+        machine->errors++;
+        return nullptr;
+    }
 
     const auto& token = machine->list[machine->offset];
 
@@ -36,11 +52,12 @@ std::unique_ptr<cerne::Node> cerne::Return(const cerne::blueprint_arguments& arg
             return_node->values.push_back(std::move(expr));
             break;
         } else {
-            cerne::expected(
+            cerne::cerror(
                 machine->file_path,
-                current_token.span,
-                "`COMMA` (,) | `END` (;|\\n) | `END_SCOPE` (})",
-                cerne::TokenTypeNames.at(current_token.type)
+                ERR_UNEXPECTED_TOKEN,
+                std::format("Expected `COMMA`, `END` or `END_SCOPE`, but got {} at {}:{}", cerne::TokenTypeNames.at(current_token.type), current_token.span.line, current_token.span.col),
+                cerne::code_snippet(machine->code_sv, current_token.span, std::format("Expected `COMMA`, `END` or `END_SCOPE`, but got {}.", cerne::TokenTypeNames.at(current_token.type))),
+                current_token.span
             );
             machine->errors++;
             break;

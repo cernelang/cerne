@@ -8,32 +8,97 @@
     See the LICENSE file in the root directory for further details.
 */
 #include "../include/parser.hpp"
-#include "blueprints/handler.hpp"
+#include "../include/parser/handler.hpp"
 
 const std::map<std::string, std::function<std::unique_ptr<cerne::Node>(const cerne::blueprint_arguments&)>> blueprints = {
     { "return", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Return) },
-    { "fun", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Fun) }
+    { "fun", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Fun) },
+    { "let", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Let) },
+    { "const", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::_Const) }
 };
 
 /* --- Parse Machine Methods Begin --- */
 
-bool cerne::ParseMachine::check_eof(const std::string_view& expected) {
-    if(offset >= list.size()) {
-        const auto& last_element = list[list.size()-1];
-
-        cerne::expected(
+bool cerne::ParseMachine::expect(TokenTypes type, bool just_check) {
+    if(is_eof() && options.flags.find("quiet") == options.flags.end()) {
+        cerne::cerror(
             file_path,
-            last_element.span,
-            expected,
-            "EOF"
+            ERR_UNEXPECTED_EOF,
+            std::format("Expected {}, but reached end of file.", TokenTypeNames.at(type)),
+            "EOF",
+            Span{
+                .line = 0,
+                .col = 0,
+                .offset = code_sv.size(),
+                .length = 0
+            }
         );
-
         errors++;
-        return true;
+        return false;
     }
 
+    const auto& token = peek();
+    if(token.type != type) {
+        if(!just_check) {
+            if(options.flags.find("quiet") == options.flags.end()) {
+                cerne::cerror(
+                    file_path,
+                    ERR_UNEXPECTED_TOKEN,
+                    std::format("Expected {}, instead got {} at {}:{}", TokenTypeNames.at(type), TokenTypeNames.at(token.type), token.span.line, token.span.col),
+                    cerne::code_snippet(
+                        code_sv,
+                        token.span,
+                        std::format("`{}` is not a {}.", token.value ? *(token.value) : TokenTypeNames.at(token.type), TokenTypeNames.at(type))
+                    ),
+                    token.span
+                );
+            }
+
+            skip_to_next_end();
+            errors++;
+        }
+
+        return false;
+    }
+    return true;
+}
+
+bool cerne::ParseMachine::expect_or(std::vector<TokenTypes> types) {
+    for(const auto& type : types) {
+        if(expect(type, true)) {
+            return true;
+        }
+    }
+
+    if(options.flags.find("quiet") == options.flags.end()) {
+        const auto& token = peek();
+        std::string expected_types_str;
+        for(size_t i = 0; i < types.size(); i++) {
+            expected_types_str += TokenTypeNames.at(types[i]);
+            if(i < types.size() - 1) {
+                expected_types_str += "` or `";
+            }
+        }
+        
+        cerne::cerror(
+            file_path,
+            ERR_UNEXPECTED_TOKEN,
+            std::format("Expected one of `{}`, instead got {} at {}:{}", expected_types_str, TokenTypeNames.at(token.type), token.span.line, token.span.col),
+            cerne::code_snippet(
+                code_sv,
+                token.span,
+                std::format("`{}` is not one of `{}`.", token.value ? *(token.value) : TokenTypeNames.at(token.type), expected_types_str)
+            ),
+            token.span
+        );
+
+        skip_to_next_end();
+        errors++;
+    }
+    
     return false;
 }
+
 
 /**
  * Execute mnemonic blueprint
@@ -107,7 +172,7 @@ void push_type_path_element(cerne::ParseMachine* machine, cerne::Type* type, boo
     machine->offset++;
 
     // check for EOF and whether the next token is an identifier (it has to be an identifier since member access can only be followed by another identifier, otherwise it's an error)
-    if(machine->check_eof(cerne::TokenTypeNames.at(cerne::TokenTypes::IDENTIFIER))) return;
+    if(machine->expect(cerne::TokenTypes::IDENTIFIER)) return;
 
     const auto& next = machine->list[machine->offset];
     if(next.type != cerne::TokenTypes::IDENTIFIER && machine->options.flags.find("quiet") == machine->options.flags.end()) {
@@ -232,7 +297,7 @@ std::unique_ptr<cerne::Type> cerne::ParseMachine::parse_type(bool is_nested = fa
                 // since both can be templated (for example, my_template<int> or List<int>)
                 offset++;
 
-                if(check_eof("Identifier (template type parameter)")) return nullptr;
+                if(!expect(TokenTypes::IDENTIFIER)) return nullptr;
 
                 // now, we do need a recursion solution since template types can be nested (for example, my_template<List<int>>)
                 // so we just call parse_type() again to get the templated type and then update
@@ -342,8 +407,8 @@ void update_parameter(cerne::ParseMachine* machine, cerne::Parameter* param) {
 
     // if there is, we move on to the next token, check for EOF and then parse the type and update the parameter's ptype
     machine->offset++;
-    
-    if(machine->check_eof("Identifier | Primitive (type)")) return;
+
+    if(!machine->expect(cerne::TokenTypes::IDENTIFIER)) return;
 
     auto type = machine->parse_type();
     if(type->data != cerne::TypeData::UNKNOWN) {
@@ -359,13 +424,13 @@ void update_parameter(cerne::ParseMachine* machine, cerne::Parameter* param) {
  */
 std::unique_ptr<cerne::Parameter> cerne::ParseMachine::parse_parameter() {
     // first token MUST BE an unpack token or an identifier.
-    if(check_eof(std::format("{} | {}", TokenTypeNames.at(TokenTypes::UNPACK), TokenTypeNames.at(TokenTypes::IDENTIFIER)))) return nullptr;
+    if(!expect(TokenTypes::UNPACK) && !expect(TokenTypes::IDENTIFIER)) return nullptr;
 
     const auto& first = list[offset];
 
     if(first.type == TokenTypes::UNPACK) {
         offset++;
-        if(check_eof(TokenTypeNames.at(TokenTypes::IDENTIFIER))) return nullptr;
+        if(!expect(TokenTypes::IDENTIFIER)) return nullptr;
 
         const auto& id = list[offset];
         // get identifier (if the next token is one) and define the parameter and push it

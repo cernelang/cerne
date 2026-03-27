@@ -10,8 +10,8 @@
 #ifndef CE_PARSER_TYPES
 #define CE_PARSER_TYPES
 
-#include "utils.hpp"
-#include "lexer.hpp"
+#include "../utils.hpp"
+#include "../lexer.hpp"
 
 namespace cerne {
     

@@ -7,7 +7,7 @@
     This file is part of the Cerne Compiler.
     See the LICENSE file in the root directory for further details.
 */
-#include "handler.hpp"
+#include "../../../include/parser/handler.hpp"
 
 /**
  * fun blueprint:
@@ -18,66 +18,32 @@
 std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) {
     // store the token list and offset
     const auto& machine = args.machine;
-    const auto& list = machine->list;
-    machine->offset++;
+    machine->advance();
 
-    // check EOF
-    if(machine->check_eof("Identifier")) return nullptr;
+    // check next token if it's an identifier
+    if(!machine->expect(TokenTypes::IDENTIFIER)) return nullptr;
 
     // identifier
-    const auto& id = list[machine->offset];
-    if(id.type != cerne::TokenTypes::IDENTIFIER && machine->options.flags.find("quiet") == machine->options.flags.end()) {
-        cerne::cerror(
-            machine->file_path, 
-            ERR_UNEXPECTED_TOKEN,
-            std::format("Expected Identifier, instead got {} at {}:{}", cerne::TokenTypeNames.at(id.type), id.span.line, id.span.col), 
-            cerne::code_snippet(
-                machine->code_sv,
-                id.span,
-                std::format("`{}` is not a valid function name.", *(id.value))
-            ),
-            id.span
-        );
-        machine->offset++;
-        machine->errors++;
-        return nullptr;
-    }
+    const auto& id = machine->peek();
 
     // increment and get to the next expected token
-    machine->offset++;
-
-    // check EOF
-    if(machine->check_eof("`(`")) return nullptr;
+    machine->advance();
 
     // now we parse the parameters, which start with a START_PARAM token and end with an END_PARAM, separated by a COMMA token.
-    const auto& start_param = list[machine->offset];
-    if(start_param.type != cerne::TokenTypes::START_PARAM  && machine->options.flags.find("quiet") == machine->options.flags.end()) {
-        cerne::cerror(
-            machine->file_path, 
-            ERR_UNEXPECTED_TOKEN,
-            std::format("Expected a `(`, instead got `{}` at {}:{}", cerne::TokenTypeNames.at(start_param.type), start_param.span.line, start_param.span.col), 
-            cerne::code_snippet(
-                machine->code_sv,
-                start_param.span,
-                std::format("`{}` is not a valid start of function parameters.", cerne::TokenTypeNames.at(start_param.type))
-            ),
-            start_param.span
-        );
-        machine->errors++;
-        return nullptr;
-    }
+    if(!machine->expect(TokenTypes::START_PARAM)) return nullptr;
 
     // increment again and start parsing parameters until a comma (or an END_PARAM) hits
-    machine->offset++;
+    machine->advance();
 
     std::vector<std::unique_ptr<Parameter>> parameters;
-    while(list[machine->offset].type != cerne::TokenTypes::END_PARAM && machine->offset < machine->list.size()) {
+    while(machine->offset < machine->list.size() && machine->peek().type != cerne::TokenTypes::END_PARAM) {
         parameters.push_back(machine->parse_parameter());
     }
 
-    machine->offset++;
+    machine->advance();
 
-    if(machine->check_eof("{")) return nullptr;
+    // functions can have an optional return type, which is specified using an ARROW token followed by the type. If no return type is specified, it defaults to void.
+    if(!machine->expect_or({TokenTypes::ARROW, TokenTypes::START_SCOPE})) return nullptr;
 
     // make a default type (void)
     auto fun_type = std::make_unique<Type>(
@@ -89,14 +55,14 @@ std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) 
     );
 
     // check if explicit return type is provided (if there is an arrow)
-    const auto& arrow = list[machine->offset];
+    const auto& arrow = machine->peek();
     if(arrow.type == cerne::TokenTypes::ARROW) {
-        machine->offset++;
+        machine->advance();
         fun_type = machine->parse_type(false);
     }
 
     // now it should parse the scope
-    const auto& begin_scope = list[machine->offset];
+    const auto& begin_scope = machine->peek();
     auto scope = std::make_unique<Scope>();
     if(begin_scope.type == cerne::TokenTypes::START_SCOPE) {
         scope = std::move(machine->parse_scope());

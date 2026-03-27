@@ -47,18 +47,66 @@ namespace cerne {
                 : ast(_ast), list(_list), file_path(_file_path), options(_options), code_sv(_code_sv) {};
             ~ParseMachine()=default;
 
-            // checks
-            bool check_eof(const std::string_view& expected);
+            // checks whether we've reached EOF, and if so, reports an error with the expected token and returns true, otherwise returns false
+            bool is_eof() { return offset >= list.size(); };
 
             // subparse methods
-            std::unique_ptr<cerne::Node> parse_mnemonic();
-            std::unique_ptr<cerne::Scope> parse_scope();
+            std::unique_ptr<Node> parse_mnemonic();
+            std::unique_ptr<Scope> parse_scope();
             std::unique_ptr<Parameter> parse_parameter();
             std::unique_ptr<Type> parse_type(bool is_nested);
-            std::unique_ptr<cerne::Node> parse_nud();
-            std::unique_ptr<cerne::Node> parse_infix(std::unique_ptr<cerne::Node> lhs);
-            std::unique_ptr<cerne::Node> parse_expr(size_t precedence);
-            std::unique_ptr<cerne::Node> parse(cerne::Token& token);
+            std::unique_ptr<Node> parse_nud();
+            std::unique_ptr<Node> parse_infix(std::unique_ptr<Node> lhs);
+            std::unique_ptr<Node> parse_expr(size_t precedence);
+            std::unique_ptr<Node> parse(Token& token);
+
+            // helpers
+
+            /**
+             * Utility to peek at token of offset + relative position WITHOUT advancing.
+             */
+            Token& peek(size_t relative_pos = 0) {
+                if(offset + relative_pos >= list.size()) {
+                    return list.at(list.size() - 1); // return last token (EOF) if we try to peek past the end
+                }
+
+                auto& token = list.at(offset + relative_pos);
+                return token;
+            };
+
+            // quick utility to advance offset
+            void advance(size_t step = 1) {
+                offset += step;
+            }
+
+            /**
+             * Utility to match a token of a specific type at the current offset and advance if it matches, otherwise return false and don't advance.
+             */
+            bool match(TokenTypes type) {
+                if(peek().type == type) {
+                    offset++;
+                    return true;
+                } else {
+                    return false;
+                }
+            };
+
+            /**
+             * Utility for better expected messages (combines peek, match AND check_eof in one function)
+             */
+            bool expect(TokenTypes type, bool just_check = false);
+            bool expect_or(std::vector<TokenTypes> types);
+
+            /**
+             * Utility to skip over to the next END token
+             */
+            void skip_to_next_end() {
+                while(offset < list.size() && peek().type != TokenTypes::END) {
+                    offset++;
+                }
+            }
+
+            // main walk method to go through the token list and execute the appropriate subparse method depending on the current token
             void walk();
     };
 

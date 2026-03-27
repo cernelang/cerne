@@ -71,19 +71,8 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
             auto params = parse_expr(0);
 
             // after expression is parsed, check if the token it stopped at is a )
-            const auto& current_token = list[offset];
-
             // groups should begin with ( and end with )
-            if(current_token.type != TokenTypes::END_PARAM) {
-                expected(
-                    file_path,
-                    token.span,
-                    TokenTypeNames.at(TokenTypes::END_PARAM),
-                    TokenTypeNames.at(current_token.type)
-                );
-
-                errors++;
-            }
+            if(!expect(TokenTypes::END_PARAM)) break;
 
             offset++;
 

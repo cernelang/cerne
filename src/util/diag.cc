@@ -23,7 +23,14 @@ void cerne::error(const char* src, const std::string& message) {
 /**
  * This function is dedicated to log compiler errors
  */
-void cerne::cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const cerne::Span& span) {
+void cerne::cerror(
+        const char* src, 
+        const size_t& errcode, 
+        const std::string_view& message, 
+        const std::string_view& code_snippet, 
+        const cerne::Span& span,
+        const std::string_view& extras
+    ) {
     // print appropriate error message
     std::cerr << 
     std::format(
@@ -36,7 +43,10 @@ void cerne::cerror(const char* src, const size_t& errcode, const std::string_vie
     FG "255m" << ':' << ' ' << message << '\n' << '\n' <<
     FG "219;1m" << src << ':' << span.line << ":" << span.col << FG "255m" << '\n' <<
     code_snippet << 
-    RESET << std::endl;
+    RESET << 
+    extras << 
+    RESET <<
+    std::endl;
 }
 
 // code snippet & helper
@@ -109,15 +119,4 @@ void cerne::tlog(double time, const std::string& message) {
 // standard debug function
 void cerne::debug(const std::string_view& message) {
     std::cout << FG "111;1m" SIGNATURE <<  FG "237m" " [" << FG "75m" << "debug" << FG "237m" "]" << FG "255m: " << message << RESET << std::endl;
-}
-
-// special expected function
-void cerne::expected(const char* src, const cerne::Span& span, const std::string_view& expected, const std::string_view& got) {
-    cerne::cerror(
-        src, 
-        2,
-        std::format("Expected {}, instead got {} at {}:{}", expected, got, span.line, span.col), 
-        "",
-        span
-    );
 }

@@ -1,0 +1,9 @@
+fun main() -> i32 {
+    let i = 50
+    let x: i32 = 40
+    const a: auto = 20
+
+
+    const exit_code: u8 = 42
+    return exit_code
+}

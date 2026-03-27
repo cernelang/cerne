@@ -1,9 +1,10 @@
 # Cerne
 ![cerne_banner](docs/assets/cerne_banner_large.png)
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kashiexe_cerne&metric=alert_status&token=9ff1139a37cd8f9552836b0515523f90b30a571a)](https://sonarcloud.io/summary/new_code?id=kashiexe_cerne)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=kashiexe_cerne&metric=reliability_rating&token=9ff1139a37cd8f9552836b0515523f90b30a571a)](https://sonarcloud.io/summary/new_code?id=kashiexe_cerne)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kashiexe_cerne&metric=sqale_rating&token=9ff1139a37cd8f9552836b0515523f90b30a571a)](https://sonarcloud.io/summary/new_code?id=kashiexe_cerne)
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
 [![wakatime](https://wakatime.com/badge/user/7a41f42c-75c2-40b0-be7a-459f70a9a37f/project/44b1414e-794f-4376-ad55-c66282484dfc.svg)](https://wakatime.com/badge/user/7a41f42c-75c2-40b0-be7a-459f70a9a37f/project/44b1414e-794f-4376-ad55-c66282484dfc)
 
 Cerne is a high level compiled programming language whose main goal is to modernize systems programming.

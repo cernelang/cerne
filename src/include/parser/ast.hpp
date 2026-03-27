@@ -10,8 +10,8 @@
 #ifndef CE_PARSER_AST
 #define CE_PARSER_AST
 
-#include "utils.hpp"
-#include "lexer.hpp"
+#include "../utils.hpp"
+#include "../lexer.hpp"
 #include "types.hpp"
 
 namespace cerne {
@@ -24,6 +24,7 @@ namespace cerne {
         Scope,
         ReturnStmt,
         FunNode,
+        VarDecl,
         Program
     };
 
@@ -36,6 +37,7 @@ namespace cerne {
         {NodeType::Scope, "Scope"},
         {NodeType::ReturnStmt, "ReturnStmt"},
         {NodeType::FunNode, "FunNode"},
+        {NodeType::VarDecl, "VarDecl"},
         {NodeType::Program, "Program"}
     };
 
@@ -45,7 +47,7 @@ namespace cerne {
         NodeType type;
         Span span;
         Node(NodeType t, Span s) : type(t), span(s) {};
-        virtual std::string print(size_t identation) = 0;
+        virtual JSON to_json() = 0;
         virtual ~Node() = default; 
     } Node;
     
@@ -61,7 +63,7 @@ namespace cerne {
 
         Leaf(Span s, std::unique_ptr<std::string> v, bool is_num = false) : Node(NodeType::Leaf, s), value(std::move(v)), is_number(is_num) {};
 
-        std::string print(size_t identation) override;
+        JSON to_json() override;
     } Leaf;
 
     /**
@@ -73,7 +75,7 @@ namespace cerne {
 
         LiteralExpr(Span s, std::unique_ptr<std::string> value) : Node(NodeType::LiteralExpr, s), value(std::move(value)) {};
 
-        std::string print(size_t identation) override;
+        JSON to_json() override;
     } LiteralExpr;
 
     /**
@@ -95,7 +97,7 @@ namespace cerne {
             TokenTypes op
         ) : Node(NodeType::BinaryExpr, s), lhs(std::move(lhs)), rhs(std::move(rhs)), op(op) {};
     
-        std::string print(size_t identation) override;
+        JSON to_json() override;
     } BinaryExpr;
 
     // x: int
@@ -116,7 +118,7 @@ namespace cerne {
             std::string_view name = ""
         ) : Node(NodeType::Parameter, s), unpack(u), symb(name) {};
         
-        std::string print(size_t identation) override;
+        JSON to_json() override;
     } Parameter;
     
     // {Scope}
@@ -125,9 +127,9 @@ namespace cerne {
         std::vector<std::unique_ptr<Node>> body;
 
         // constructor for the scope node, with a default (empty) span
-        Scope(Span s = {}) : Node(NodeType::Scope, s) {};
+        explicit Scope(Span s = {}) : Node(NodeType::Scope, s) {};
         
-        std::string print(size_t identation) override;
+        JSON to_json() override;
     } Scope;
 
     /**
@@ -136,20 +138,9 @@ namespace cerne {
     typedef struct ReturnStmt : Node {
         std::vector<std::unique_ptr<Node>> values;
 
-        ReturnStmt(Span s) : Node(NodeType::ReturnStmt, s) {};
+        explicit ReturnStmt(Span s) : Node(NodeType::ReturnStmt, s) {};
 
-        std::string print(size_t identation) override {
-            std::string result = std::format("{}{{\n{}\"type\": \"ReturnStmt\",\n", std::string(identation, ' '), std::string(identation+2, ' '));
-            
-            result += std::string(identation, ' ') + "\"Values\": [\n";
-            for(size_t i = 0; i < values.size(); i++) {
-                const auto& value = values[i];
-                result += std::format("{}{}", value->print(identation+2), (i == values.size()-1) ? "" : ",\n");
-            }
-            result += std::string(identation, ' ') + "]\n";
-            result += std::string(identation, ' ') + "}\n";
-            return result;
-        };
+        JSON to_json() override;
     } ReturnStmt;
 
     // function definitions require a body, parameters, a return type and a name. every single one.
@@ -165,7 +156,7 @@ namespace cerne {
         std::string_view name;
 
         // constructor for the function node (as in function definition, not declaration nor call)
-        FunNode(
+        explicit FunNode(
             Span span,
             std::vector<std::unique_ptr<Parameter>> parameters, 
             std::unique_ptr<Scope> body, 
@@ -173,8 +164,28 @@ namespace cerne {
             std::string_view name
         ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name) {};
         
-        std::string print(size_t identation) override;
+        JSON to_json() override;
     } FunNode;
+
+    // variable declaration
+    typedef struct VarDecl : Node {
+        std::string_view name;
+        bool is_const;
+        bool uninitialized;
+        std::unique_ptr<Type> type;
+        std::unique_ptr<Node> value;
+
+        explicit VarDecl(
+            Span span,
+            std::string_view name,
+            bool is_const,
+            bool uninitialized,
+            std::unique_ptr<Type> type,
+            std::unique_ptr<Node> value
+        ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), type(std::move(type)), value(std::move(value)) {};
+
+        JSON to_json() override;
+    } VarDecl;
     
     // global node
     typedef struct Program : Node {
@@ -182,8 +193,19 @@ namespace cerne {
 
         // constructor for the program node, no need for a span since it's just a container for the whole program
         Program() : Node(NodeType::Program, Span{0,0,0,0}) {};
-        
-        std::string print(size_t identation) override {return std::string(identation, ' ');};
+
+        JSON to_json() override {
+            auto json = std::make_unique<JSONBuilder>();
+            
+            json->convert_array(
+                std::vector<JSON>(
+                    node_list.size(),
+                    JSON()
+                )
+            );
+            
+            return json->json;
+        };
     } Program;
 
     /**
@@ -197,13 +219,13 @@ namespace cerne {
             size_t errors;
             size_t warnings;
             
-            // stores the actual
+            // stores the actual root of the AST
             std::unique_ptr<Program> root;
             
             // for Diag
             const char* file_path;
 
-            AST(const char* path): file_path(path) {
+            explicit AST(const char* path): file_path(path) {
                 root = std::make_unique<Program>();
                 errors = 0;
                 warnings = 0;

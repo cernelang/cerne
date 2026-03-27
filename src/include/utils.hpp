@@ -40,6 +40,7 @@
 #define ERR_UNEXPECTED_TOKEN    3
 #define ERR_UNKNOWN_KEYWORD     4
 #define ERR_OPEN_SCOPE          5
+constexpr size_t ERR_UNEXPECTED_EOF = 6;
 
 // util injection in cerne namespace
 namespace cerne {
@@ -67,8 +68,8 @@ namespace cerne {
     // Diagnostics
     std::string_view code_snippet(const std::string_view& code, Span span, const std::string_view& under_message = "");
     void error(const char* where, const std::string& message);
-    void cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const Span& span);
-    void expected(const char* src, const Span& span, const std::string_view& expected, const std::string_view& got);
+    void cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const Span& span, const std::string_view& extras = "");
+    // void expected(const char* src, const Span& span, const std::string_view& expected, const std::string_view& got);
     void tlog(double time, const std::string& message);
     void debug(const std::string_view& message);
 
@@ -85,6 +86,28 @@ namespace cerne {
             // others
             void event(std::string name, callback cb);
             void help() const;
+    };
+
+    // JSON Building
+
+    // set for styling purposes
+    constexpr size_t JSON_INDENT_SIZE = 4;
+
+    typedef struct JSON {
+        std::map<std::string, std::variant<std::string, JSON>> properties;
+    } JSON;
+
+    class JSONBuilder {
+        public:
+            JSON json;
+            size_t indentation_level;
+
+            JSONBuilder(JSON json = {}, size_t indentation_level = 0) : json(std::move(json)), indentation_level(indentation_level) {}
+            ~JSONBuilder()=default;
+
+            std::string build();
+            std::string convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>>& arr);
+            void add_property(const std::string& key, const std::variant<std::string, JSON>& value);
     };
     
     // misc utils

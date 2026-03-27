@@ -56,7 +56,8 @@ namespace cerne {
         COMMA,
         DOT,
         END,
-        DEFINE,
+        EQU,
+        DEFINE,         // :
 
         // conjectures
         ARROW,
@@ -117,6 +118,7 @@ namespace cerne {
         { TokenTypes::COMMA, "Comma" },
         { TokenTypes::DOT, "Dot" },
         { TokenTypes::END, "End" },
+        { TokenTypes::EQU, "Equal" },
         { TokenTypes::DEFINE, "Define" },
 
         { TokenTypes::ARROW, "Arrow" },
