@@ -14,7 +14,7 @@
 // quick helpers
 
 std::string type_path_to_json(cerne::TypePath typepath) {
-
+    return ""; // temporary
 }
 
 cerne::JSON type_to_json(cerne::Type* type) {
