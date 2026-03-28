@@ -23,15 +23,26 @@ namespace cerne {
         cerne::ParseMachine* machine;
     } blueprint_arguments;
 
+    /**
+     * Common blueprints are regular blueprints that simply hold the same logic that can be used for multiple mnemonics at the same time
+     * One example is the variable declaration blueprint, the logic is the same for let and const, the only thing differing being mutability
+     */
     namespace commons {
         std::unique_ptr<cerne::Node> var_declaration(const blueprint_arguments& args, bool is_const);
     }
 
+    // function related blueprints
     std::unique_ptr<cerne::Node> Fun(const blueprint_arguments& args);
     std::unique_ptr<cerne::Node> Return(const blueprint_arguments& args);
+
+    // variable declaration blueprints
     std::unique_ptr<cerne::Node> Let(const blueprint_arguments& args);
     // _Const because Const was giving me problems for some reason
     std::unique_ptr<cerne::Node> _Const(const blueprint_arguments& args);
+
+    // package manager and module system blueprints
+    std::unique_ptr<cerne::Node> Import(const blueprint_arguments& args);
+    std::unique_ptr<cerne::Node> Export(const blueprint_arguments& args);
 }
 
 #endif

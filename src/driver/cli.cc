@@ -113,18 +113,18 @@ void cerne::CLI::help() const {
  ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝
 )raw";
 
-    std::cout << FG "255;1m" << logo << 
+    std::cout << FG "255m" << logo << 
 
-    "\n=============================================\n\n" <<
+    "\n\n" <<
     
     "Welcome to Cerne!\n\n" << 
     // command usage just in case the user doesn't know how to use the CLI or just wants a reminder
     
-    FG "218;4m" << "Command Usage\n" << 
+    FG "218;4;1m" << "Command Usage\n" << ESC "[0m" 
     FG "223;24m" << "> " << FG "189m" << "cerne " << FG "255m" << "<command> [flags] [files]\n\n" <<
     
     // command list in the help message
-    FG "121;4m" << "Available Commands\n" <<
+    FG "121;4;1m" << "Available Commands\n" << ESC "[0m" 
     FG "223;24m" << "> " << FG "195m" << "help" << FG "255m" << " - shows this message\n" <<
     FG "223;24m" << "> " << FG "195m" << "version" << FG "255m" << " - shows the current version of the compiler\n\n" <<
     

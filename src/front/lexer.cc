@@ -275,7 +275,7 @@ class LexerMachine {
                 default:
                     auto token = cerne::Token(
                         conjecture_type,
-                        nullptr,
+                        std::make_unique<std::string>(possible_conjecture),
                         cerne::Span{
                             .line=line,
                             .col=col-1,
@@ -303,7 +303,7 @@ class LexerMachine {
                     // for any other symbol, just push to the token list
                     auto token = cerne::Token(
                         symbol_type,
-                        nullptr,
+                        std::make_unique<std::string>(std::string{c}),
                         cerne::Span{
                             .line=line,
                             .col=col-1,

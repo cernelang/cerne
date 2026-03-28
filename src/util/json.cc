@@ -10,6 +10,68 @@
 #include "../include/utils.hpp"
 #include "../include/parser.hpp"
 
+/**
+ * "Lazy" utility to improve JSON styling
+ */
+std::string beautify_json(const std::string& json) {
+    std::string final_json;
+    size_t level = 0;
+    bool isStr = false;
+
+    for(size_t i = 0; i < json.length(); i++) {
+        char c = json[i];
+
+        // handling strings
+        if(c == '\"' && (i==0 || json[i-1] != '\\')) {
+            isStr = !isStr;
+            final_json += c;
+            continue;
+        }
+
+        if(isStr) {
+            final_json += c;
+            continue;
+        }
+
+        // other characters
+        switch(c) {
+            case '{':
+            case '[':
+                final_json += c;
+                final_json += '\n';
+                level++;
+                final_json += std::string(level * cerne::JSON_INDENT_SIZE, ' ');
+                break;
+
+            case '}':
+            case ']':
+                final_json += '\n';
+                level--;
+                final_json += std::string(level * cerne::JSON_INDENT_SIZE, ' ');
+                final_json += c;
+                break;
+
+            case ',':
+                final_json += c;
+                final_json += '\n';
+                final_json += std::string(level * cerne::JSON_INDENT_SIZE, ' ');
+                break;
+
+            case ':':
+                final_json += c;
+                final_json += ' ';
+                break;
+
+            default:
+                if(c != ' ' && c != '\n' && c != '\t') {
+                    final_json += c;
+                }
+        }
+    }
+
+    return final_json;
+}
+
 std::string cerne::json(void* AST) {
     const auto& ast = static_cast<cerne::AST*>(AST);
 
@@ -27,7 +89,7 @@ std::string cerne::json(void* AST) {
     builder->add_property("root", builder->convert_array(root_nodes));
 
     const auto json_str = builder->build();
-    return json_str;
+    return beautify_json(json_str);
 }
 
 std::string cerne::JSONBuilder::build() {
@@ -43,8 +105,7 @@ std::string cerne::JSONBuilder::build() {
             if constexpr (std::is_same_v<T, std::string>) {
 
                 json_str += std::format(
-                    "{}\"{}\": {}{}{}{}\n", 
-                    std::string(indentation_level * JSON_INDENT_SIZE, ' '), 
+                    "\"{}\": {}{}{}{}\n", 
                     key, 
                     // arrays are exempt from quotes, since they are already valid JSON, string aren't though
                     ((val[0] == '[') ? ' ' : '"'), val, ((val[0] == '[') ? ' ' : '"'),
@@ -54,8 +115,7 @@ std::string cerne::JSONBuilder::build() {
             } else if constexpr (std::is_same_v<T, cerne::JSON>) {
 
                 json_str += std::format(
-                    "{}\"{}\": {}{}\n", 
-                    std::string(indentation_level * JSON_INDENT_SIZE, ' '), 
+                    "\"{}\": {}{}\n",
                     key, 
                     JSONBuilder{val, indentation_level+1}.build(), 
                     (next_it == json.properties.end() ? "" : ",")
@@ -79,8 +139,7 @@ std::string cerne::JSONBuilder::convert_array(const std::variant<std::vector<std
         if constexpr (std::is_same_v<T, std::vector<std::string>>) {
             for(const auto& str : val) {
                 json_str += std::format(
-                    "{}\"{}\"{}\n", 
-                    std::string(indentation_level * JSON_INDENT_SIZE, ' '), 
+                    "\"{}\"{}\n", 
                     str,
                     (str != val.back() ? "," : "")
                 );
@@ -90,8 +149,7 @@ std::string cerne::JSONBuilder::convert_array(const std::variant<std::vector<std
                 const auto& json = val[i];
 
                 json_str += std::format(
-                    "{}{}{}\n", 
-                    std::string(indentation_level * JSON_INDENT_SIZE, ' '), 
+                    "{}{}\n", 
                     JSONBuilder{json, indentation_level+1}.build(),
                     (i != (val.size() - 1) ? "," : "")
                 );

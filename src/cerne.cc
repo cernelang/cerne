@@ -10,6 +10,22 @@
 #include "include/cerne.hpp"
 
 /**
+ * spearate utility to check ast print conditions
+ */
+void check_ast_print(const cerne::args& args, const std::unique_ptr<cerne::AST>& ast) {
+    if(args.flags.contains("print_ast")) {
+        std::cout << cerne::json(ast.get()) << std::endl;
+    } else if(args.flags.contains("dump_ast") || args.flags.contains("dump")) {
+        std::string dump_path = std::string(ast->file_path) + ".ast.json";
+        std::ofstream dump_file(dump_path);
+        dump_file << cerne::json(ast.get());
+        dump_file.close();
+
+        cerne::debug(std::format("AST dumped to {}", dump_path));
+    }
+}
+
+/**
  * Compilation pipeline
  */
 void compile_files(const cerne::args& args, std::vector<std::string> files) {
@@ -36,18 +52,7 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
         }
 
         // ast diagnostics
-        if(args.flags.find("print_ast") != args.flags.end()) {
-            std::cout << cerne::json(ast.get()) << std::endl;
-        }
-
-        if(args.flags.find("ast_dump") != args.flags.end()) {
-            std::string dump_path = std::string(file) + ".ast.json";
-            std::ofstream dump_file(dump_path);
-            dump_file << cerne::json(ast.get());
-            dump_file.close();
-
-            cerne::debug(std::format("AST dumped to {}", dump_path));
-        }
+        check_ast_print(args, ast);
     }
 }
 

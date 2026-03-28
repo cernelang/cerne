@@ -1,7 +1,6 @@
 # Cerne
 ![cerne_banner](docs/assets/cerne_banner_large.png)
 
-[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
@@ -33,3 +32,5 @@ Hello there! I'm **Kashi** (alias) and I'm a 19 year old <ins>CS student</ins> f
 I decided to create Cerne because I've been wanting to create a programming language for a really long time, and after diving deep into systems programming, I realized that we still rely on very old programming languages and methods for certain tasks. 
 
 **My goal with this project is NOT to replace the standard**, but rather to introduce a modern alternative for systems programming (and even for general purpose as well) while respecting the decades of work done by genius developers in the compiler industry. :)
+
+[![SonarQube Cloud](https://sonarcloud.io/images/project_badges/sonarcloud-dark.svg)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)

@@ -120,3 +120,25 @@ void cerne::tlog(double time, const std::string& message) {
 void cerne::debug(const std::string_view& message) {
     std::cout << FG "111;1m" SIGNATURE <<  FG "237m" " [" << FG "75m" << "debug" << FG "237m" "]" << FG "255m: " << message << RESET << std::endl;
 }
+
+/**
+ * Utility for syntax highlighting
+ * this makes cerne code in diagnostics look much better and more readable since you can see the distinction between tokens.
+ */
+std::string highlight(const std::string& code) {
+    return code; // temporary
+}
+
+/**
+ * Utility for simply converting notes into a more consistent format (used for footers in diagnostics or manual notes for example)
+ */
+std::string cerne::note(const std::string& base_note) {
+    return std::format("\n{}{}= Note{}{}: {}{}\n", BOLD, ce_colors::fgblue, RESET BOLD, ce_colors::fgwhite, base_note, RESET);
+}
+
+/**
+ * Same as before but for examples
+ */
+std::string cerne::example(const std::string& base_example) {
+    return std::format("\n{}{}= Example{}{}: {}{}\n", BOLD, ce_colors::fggreen, RESET BOLD, ce_colors::fgwhite, base_example, RESET);
+}

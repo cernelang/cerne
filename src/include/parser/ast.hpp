@@ -25,6 +25,7 @@ namespace cerne {
         ReturnStmt,
         FunNode,
         VarDecl,
+        Import,
         Program
     };
 
@@ -38,6 +39,7 @@ namespace cerne {
         {NodeType::ReturnStmt, "ReturnStmt"},
         {NodeType::FunNode, "FunNode"},
         {NodeType::VarDecl, "VarDecl"},
+        {NodeType::Import, "Import"},
         {NodeType::Program, "Program"}
     };
 
@@ -172,7 +174,7 @@ namespace cerne {
         std::string_view name;
         bool is_const;
         bool uninitialized;
-        std::unique_ptr<Type> type;
+        std::unique_ptr<Type> var_type;
         std::unique_ptr<Node> value;
 
         explicit VarDecl(
@@ -180,12 +182,27 @@ namespace cerne {
             std::string_view name,
             bool is_const,
             bool uninitialized,
-            std::unique_ptr<Type> type,
+            std::unique_ptr<Type> var_type,
             std::unique_ptr<Node> value
-        ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), type(std::move(type)), value(std::move(value)) {};
+        ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
 
         JSON to_json() override;
     } VarDecl;
+
+    // import and export nodes
+
+    typedef struct ImportNode : Node {
+        std::string file_path;
+        std::string user;
+        std::vector<std::string> package_path;
+        bool is_path = true;
+        bool is_package = false;
+        bool is_from_user = false;
+
+        explicit ImportNode(Span span) : Node(NodeType::Import, span) {};
+
+        JSON to_json() override;
+    } ImportNode;
     
     // global node
     typedef struct Program : Node {

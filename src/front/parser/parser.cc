@@ -14,7 +14,8 @@ const std::map<std::string, std::function<std::unique_ptr<cerne::Node>(const cer
     { "return", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Return) },
     { "fun", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Fun) },
     { "let", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Let) },
-    { "const", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::_Const) }
+    { "const", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::_Const) },
+    { "import", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Import) }
 };
 
 /* --- Parse Machine Methods Begin --- */
@@ -63,37 +64,39 @@ bool cerne::ParseMachine::expect(TokenTypes type, bool just_check) {
     return true;
 }
 
-bool cerne::ParseMachine::expect_or(std::vector<TokenTypes> types) {
+bool cerne::ParseMachine::expect_or(std::vector<TokenTypes> types, bool just_check) {
     for(const auto& type : types) {
         if(expect(type, true)) {
             return true;
         }
     }
 
-    if(options.flags.find("quiet") == options.flags.end()) {
-        const auto& token = peek();
-        std::string expected_types_str;
-        for(size_t i = 0; i < types.size(); i++) {
-            expected_types_str += TokenTypeNames.at(types[i]);
-            if(i < types.size() - 1) {
-                expected_types_str += "` or `";
+    if(!just_check) {
+        if(options.flags.find("quiet") == options.flags.end()) {
+            const auto& token = peek();
+            std::string expected_types_str;
+            for(size_t i = 0; i < types.size(); i++) {
+                expected_types_str += TokenTypeNames.at(types[i]);
+                if(i < types.size() - 1) {
+                    expected_types_str += "` or `";
+                }
             }
-        }
-        
-        cerne::cerror(
-            file_path,
-            ERR_UNEXPECTED_TOKEN,
-            std::format("Expected one of `{}`, instead got {} at {}:{}", expected_types_str, TokenTypeNames.at(token.type), token.span.line, token.span.col),
-            cerne::code_snippet(
-                code_sv,
-                token.span,
-                std::format("`{}` is not one of `{}`.", token.value ? *(token.value) : TokenTypeNames.at(token.type), expected_types_str)
-            ),
-            token.span
-        );
+            
+            cerne::cerror(
+                file_path,
+                ERR_UNEXPECTED_TOKEN,
+                std::format("Expected one of `{}`, instead got {} at {}:{}", expected_types_str, TokenTypeNames.at(token.type), token.span.line, token.span.col),
+                cerne::code_snippet(
+                    code_sv,
+                    token.span,
+                    std::format("`{}` is not one of `{}`.", token.value ? *(token.value) : TokenTypeNames.at(token.type), expected_types_str)
+                ),
+                token.span
+            );
 
-        skip_to_next_end();
-        errors++;
+            skip_to_next_end();
+            errors++;
+        }
     }
     
     return false;

@@ -101,7 +101,7 @@ cerne::JSON cerne::VarDecl::to_json() {
     json.properties["Name"] = std::string(name);
     json.properties["Is_Const"] = std::format("{}", is_const);
     json.properties["Uninitialized"] = std::format("{}", uninitialized);
-    json.properties["Type"] = type_to_json(type.get());
+    json.properties["Type"] = type_to_json(var_type.get());
     json.properties["Value"] = value ? JSONBuilder{value->to_json()}.build() : "null";
     json.properties["type"] = "VarDecl";
     return json;
@@ -116,6 +116,18 @@ cerne::JSON cerne::ReturnStmt::to_json() {
     }
     json.properties["Values"] = JSONBuilder{}.convert_array(values_json);
     json.properties["type"] = "ReturnStmt";
+    return json;
+}
+
+cerne::JSON cerne::ImportNode::to_json() {
+    cerne::JSON json;
+    json.properties["File_Path"] = file_path;
+    json.properties["User"] = user;
+    json.properties["Package_Path"] = JSONBuilder{}.convert_array(package_path);
+    json.properties["Is_Path"] = std::format("{}", is_path);
+    json.properties["Is_Package"] = std::format("{}", is_package);
+    json.properties["Is_From_User"] = std::format("{}", is_from_user);
+    json.properties["type"] = "ImportNode";
     return json;
 }
 

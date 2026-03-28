@@ -10,11 +10,21 @@
 #ifndef CE_UTILS
 #define CE_UTILS
 
+// ansii escape codes for styling + signature
 #define ESC         "\x1b"
 #define FG          ESC "[38;5;"
 #define BG          ESC "[48;5;"
 #define RESET       ESC "[0m"
+#define BOLD        ESC "[1m"
 #define SIGNATURE   "[cerne]"
+
+// color palette
+typedef struct ce_colors {
+    static constexpr const char* fgblue     = FG "75m";
+    static constexpr const char* fgwhite    = FG "255m";
+    static constexpr const char* fggreen    = FG "120m";
+    static constexpr const char* fgred      = FG "196m";
+} ce_colors;
 
 // std library
 #include<stdlib.h>
@@ -35,12 +45,13 @@
 #include<cmath>
 
 // error codes
-#define ERR_UNEXPECTED_SYMBOL   1
-#define ERR_TOO_MANY_DOTS       2
-#define ERR_UNEXPECTED_TOKEN    3
-#define ERR_UNKNOWN_KEYWORD     4
-#define ERR_OPEN_SCOPE          5
-constexpr size_t ERR_UNEXPECTED_EOF = 6;
+constexpr uint8_t ERR_UNEXPECTED_SYMBOL      = 1;
+constexpr uint8_t ERR_TOO_MANY_DOTS          = 2;
+constexpr uint8_t ERR_UNEXPECTED_TOKEN       = 3;
+constexpr uint8_t ERR_UNKNOWN_KEYWORD        = 4;
+constexpr uint8_t ERR_OPEN_SCOPE             = 5;
+constexpr uint8_t ERR_UNEXPECTED_EOF         = 6;
+constexpr uint8_t ERR_MALFORMED_IMPORT       = 7;
 
 // util injection in cerne namespace
 namespace cerne {
@@ -69,9 +80,10 @@ namespace cerne {
     std::string_view code_snippet(const std::string_view& code, Span span, const std::string_view& under_message = "");
     void error(const char* where, const std::string& message);
     void cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const Span& span, const std::string_view& extras = "");
-    // void expected(const char* src, const Span& span, const std::string_view& expected, const std::string_view& got);
     void tlog(double time, const std::string& message);
     void debug(const std::string_view& message);
+    std::string note(const std::string& base_note);
+    std::string example(const std::string& base_example);
 
     // CLI tooling
     class CLI {
