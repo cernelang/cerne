@@ -22,6 +22,6 @@ struct Version {
     int minor;
 };
 
-constexpr Version CERNE_VERSION{0, 1, 5};
+constexpr Version CERNE_VERSION{0, 2, 0};
 
 #endif

@@ -48,7 +48,7 @@ namespace cerne {
             ~ParseMachine()=default;
 
             // checks whether we've reached EOF, and if so, reports an error with the expected token and returns true, otherwise returns false
-            bool is_eof() { return offset >= list.size(); };
+            bool is_eof() const { return offset >= list.size(); };
 
             // subparse methods
             std::unique_ptr<Node> parse_mnemonic();

@@ -355,7 +355,7 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                 continue;
             } 
             // unexpected character (should ignore whitespaces)
-            else if(!isspace(c) && !(options.flags.find("quiet") != options.flags.end())) { 
+            else if(!isspace(c) && !options.flags.contains("quiet")) { 
                 const auto& _cerr_span = cerne::Span{
                     .line=machine->line,
                     .col=machine->col,

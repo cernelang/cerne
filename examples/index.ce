@@ -2,5 +2,5 @@ import std.io
 
 // functions without -> <return-type> are automatically considered <void> functions
 fun main() {
-    print("Hello World!")
+    std::print("Hello World!")
 }

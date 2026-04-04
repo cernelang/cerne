@@ -12,13 +12,14 @@
 /**
  * spearate utility to check ast print conditions
  */
-void check_ast_print(const cerne::args& args, const std::unique_ptr<cerne::AST>& ast) {
-    if(args.flags.contains("print_ast")) {
-        std::cout << cerne::json(ast.get()) << std::endl;
-    } else if(args.flags.contains("dump_ast") || args.flags.contains("dump")) {
+void check_ast_print(const cerne::args& args, const cerne::AST* ast, bool error = false) {
+    // check for print/dump flags and their values (to see if it's exclusively for AST)
+    if(args.flags.contains("print_ast") || (args.flags.contains("print") && args.flags.at("print") == "ast")) {
+        std::cout << cerne::json(ast, error) << std::endl;
+    } else if(args.flags.contains("dump_ast") || (args.flags.contains("dump") && args.flags.at("dump") == "ast")) {
         std::string dump_path = std::string(ast->file_path) + ".ast.json";
         std::ofstream dump_file(dump_path);
-        dump_file << cerne::json(ast.get());
+        dump_file << cerne::json(ast, error);
         dump_file.close();
 
         cerne::debug(std::format("AST dumped to {}", dump_path));
@@ -38,7 +39,7 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
         // now we pass it through the lexer
         auto tokens = cerne::lexer(code_sv, file, args);
         if(tokens.size() == 0) break;
-        if(args.flags.find("debug") != args.flags.end()) {
+        if(args.flags.contains("debug")) {
             cerne::debug(std::format("Tokens -> {}", tokens.size()));
         }
 
@@ -47,12 +48,18 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
 
         // after parsing, we pass the AST through SEMA and then to IR generation, for now though, since those haven't been developed yet, the if statement will be blank
         if(ast->errors > 0) {
+            check_ast_print(args, ast.get(), true);
             cerne::error(file, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
             break;
         }
+        
+        // add amount of nodes to debug information
+        if(args.flags.contains("debug")) {
+            cerne::debug(std::format("Nodes -> {}", ast->root->node_list.size()));
+        }
 
         // ast diagnostics
-        check_ast_print(args, ast);
+        check_ast_print(args, ast.get());
     }
 }
 

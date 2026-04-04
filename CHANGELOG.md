@@ -1,9 +1,9 @@
 # v0.2.0
 HUGE CHANGES
 ## Parser & Lexer
-Each update that passes, the lexer gets closer and closer to feeling "complete". However, this major update was not because of the lexer, and instead because of the parser. The parser is now OFFICIALLY in it's first, working version. It can parse return statements, the fun, import and export keywords, AND variable declarations (and obviously, expressions)!
+Each update that passes, the lexer gets closer and closer to feeling "complete". However, this major update was not because of the lexer, and instead because of the parser. The parser is now OFFICIALLY in it's first, working version. It can parse return statements, the fun, import keyword, AND variable declarations (and obviously, expressions)!
 
-This is HUGE since now I can just focus on the fixing any parser related errors and add more features and can finally start moving towards SEMA (which will have it's own first working version for v0.3.0).
+This is HUGE since now I can just focus on the fixing any parser related errors, add more features and can finally start moving towards SEMA (which will have it's own first working version for v0.3.0).
 
 # v0.1.4
 biggest update in v0.1.x

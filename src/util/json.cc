@@ -72,21 +72,24 @@ std::string beautify_json(const std::string& json) {
     return final_json;
 }
 
-std::string cerne::json(void* AST) {
-    const auto& ast = static_cast<cerne::AST*>(AST);
-
+std::string cerne::json(const cerne::AST* ast, bool no_ast = false) {
     const auto& builder = std::make_unique<cerne::JSONBuilder>();
     std::vector<cerne::JSON> root_nodes;
 
-    for(size_t i = 0; i < ast->root->node_list.size(); i++) {
-        const auto& node = ast->root->node_list[i];
-        root_nodes.push_back(node->to_json());
+    if(!no_ast) {
+        for(size_t i = 0; i < ast->root->node_list.size(); i++) {
+            const auto& node = ast->root->node_list[i];
+            root_nodes.push_back(node->to_json());
+        }
     }
 
     builder->add_property("errors", std::format("{}", ast->errors));
     builder->add_property("warnings", std::format("{}", ast->warnings));
     builder->add_property("file_path", std::string(ast->file_path));
-    builder->add_property("root", builder->convert_array(root_nodes));
+    
+    if(!root_nodes.empty()) {
+        builder->add_property("root", builder->convert_array(root_nodes));
+    }
 
     const auto json_str = builder->build();
     return beautify_json(json_str);

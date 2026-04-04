@@ -1,0 +1,27 @@
+{
+  "name": "cerne",
+  "version": "0.2.0",
+  "description": "![cerne_banner](docs/assets/cerne_banner_large.png)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "make && node tests/test_auto.js",
+    "auto": "node tests/test_auto.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cernelang/cerne.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "LGPL-3.0-only",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/cernelang/cerne/issues"
+  },
+  "homepage": "https://github.com/cernelang/cerne#readme"
+}

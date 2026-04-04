@@ -10,22 +10,6 @@
 #ifndef CE_UTILS
 #define CE_UTILS
 
-// ansii escape codes for styling + signature
-#define ESC         "\x1b"
-#define FG          ESC "[38;5;"
-#define BG          ESC "[48;5;"
-#define RESET       ESC "[0m"
-#define BOLD        ESC "[1m"
-#define SIGNATURE   "[cerne]"
-
-// color palette
-typedef struct ce_colors {
-    static constexpr const char* fgblue     = FG "75m";
-    static constexpr const char* fgwhite    = FG "255m";
-    static constexpr const char* fggreen    = FG "120m";
-    static constexpr const char* fgred      = FG "196m";
-} ce_colors;
-
 // std library
 #include<stdlib.h>
 #include<cstring>
@@ -44,6 +28,22 @@ typedef struct ce_colors {
 #include<memory>
 #include<cmath>
 
+// ansii escape codes for styling + signature
+#define ESC         "\x1b"
+#define FG          ESC "[38;5;"
+#define BG          ESC "[48;5;"
+#define RESET       ESC "[0m"
+#define BOLD        ESC "[1m"
+#define SIGNATURE   "[cerne]"
+
+// color palette
+struct ce_colors {
+    static constexpr const char* fgblue     = FG "75m";
+    static constexpr const char* fgwhite    = FG "255m";
+    static constexpr const char* fggreen    = FG "120m";
+    static constexpr const char* fgred      = FG "196m";
+};
+
 // error codes
 constexpr uint8_t ERR_UNEXPECTED_SYMBOL      = 1;
 constexpr uint8_t ERR_TOO_MANY_DOTS          = 2;
@@ -57,23 +57,22 @@ constexpr uint8_t ERR_MALFORMED_IMPORT       = 7;
 namespace cerne {
     
     // structs
-    typedef struct Span {
+    struct Span {
         size_t line;
         size_t col;
         size_t offset;
         size_t length;
-    } Span;
+    };
     
 
     // CLI arg structs
-    typedef std::pair<std::string, std::string> flag;
+    using flag = std::pair<std::string, std::string>;
+    using callback = std::variant<std::function<void()>, std::function<void(std::vector<std::string>)>>;
 
-    typedef struct args {
+    struct args {
         std::map<std::string, std::string> flags;
         std::vector<std::string> files;
-    } args;
-
-    typedef std::variant<std::function<void()>, std::function<void(std::vector<std::string>)>> callback;
+    };
     
 
     // Diagnostics
@@ -105,16 +104,16 @@ namespace cerne {
     // set for styling purposes
     constexpr size_t JSON_INDENT_SIZE = 4;
 
-    typedef struct JSON {
+    struct JSON {
         std::map<std::string, std::variant<std::string, JSON>> properties;
-    } JSON;
+    };
 
     class JSONBuilder {
         public:
             JSON json;
             size_t indentation_level;
 
-            JSONBuilder(JSON json = {}, size_t indentation_level = 0) : json(std::move(json)), indentation_level(indentation_level) {}
+            explicit JSONBuilder(JSON json = {}, size_t indentation_level = 0) : json(std::move(json)), indentation_level(indentation_level) {}
             ~JSONBuilder()=default;
 
             std::string build();
@@ -125,7 +124,10 @@ namespace cerne {
     // misc utils
     std::string readf(const std::string& path);
     args parse_args(int argc, char** argv);
-    std::string json(void* AST);
+    
+    // forward declaration because of circular dependencies
+    class AST;
+    std::string json(const AST* ast, bool no_ast);
 }
 
 #endif

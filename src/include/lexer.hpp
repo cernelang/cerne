@@ -159,7 +159,7 @@ namespace cerne {
         TokenTypes::POWER
     };
 
-    typedef struct Token {
+    struct Token {
         TokenTypes type;
         std::unique_ptr<std::string> value;
         Span span;
@@ -175,7 +175,7 @@ namespace cerne {
         // delete copy constructor and copy assignment operator to prevent accidental copying of tokens
         Token(const Token&) = delete;
         Token& operator=(const Token&) = delete;
-    } Token;
+    };
 
     const std::vector<std::string> keywords = {
         "const", "let", 
@@ -196,7 +196,7 @@ namespace cerne {
         "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
     };
 
-    typedef std::vector<Token> tokenlist;
+    using tokenlist = std::vector<Token>;
 
     tokenlist lexer(const std::string_view& code, const char* file_path, const args& options);
 }

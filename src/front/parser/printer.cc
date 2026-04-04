@@ -13,21 +13,32 @@
 
 // quick helpers
 
-std::string type_path_to_json(cerne::TypePath typepath) {
-    return ""; // temporary
+std::string type_path_to_json(const cerne::TypePath& typepath) {
+    std::vector<cerne::JSON> elements_json;
+
+    for(size_t i = 0; i < typepath.size(); i++) {
+        const auto& element = typepath[i];
+
+        cerne::JSON element_json;
+        element_json.properties["name"] = std::string(element.name);
+        element_json.properties["is_member"] = std::format("{}", element.is_member);
+        elements_json.push_back(element_json);
+    }
+
+    return cerne::JSONBuilder{}.convert_array(elements_json);
 }
 
-cerne::JSON type_to_json(cerne::Type* type) {
+cerne::JSON type_to_json(const cerne::Type* type) {
     cerne::JSON json;
-    json.properties["Type_Data"] = cerne::TypeDataNames.at(type->data);
-    json.properties["IsConst"] = std::format("{}", type->is_const);
-    json.properties["IsPointer"] = std::format("{}", type->is_pointer);
-    json.properties["Type_Info"] = std::holds_alternative<cerne::Primitive>(type->typeinfo) ? std::format("{}", type->typeinfo.index()) : "1";
+    json.properties["type_data"] = cerne::TypeDataNames.at(type->data);
+    json.properties["is_const"] = std::format("{}", type->is_const);
+    json.properties["is_pointer"] = std::format("{}", type->is_pointer);
+    json.properties["type_info"] = std::holds_alternative<cerne::Primitive>(type->typeinfo) ? std::format("{}", type->typeinfo.index()) : "1";
 
     if(type->templated_type) {
-        json.properties["Templated_Type"] = type_to_json(type->templated_type.get());
+        json.properties["templated_type"] = type_to_json(type->templated_type.get());
     } else {
-        json.properties["Templated_Type"] = "null";
+        json.properties["templated_type"] = "null";
     }
 
     json.properties["type"] = "Type";
@@ -54,17 +65,17 @@ cerne::JSON cerne::LiteralExpr::to_json() {
 cerne::JSON cerne::BinaryExpr::to_json() {
     cerne::JSON json;
     json.properties["type"] = "BinaryExpr";
-    json.properties["LeftHandSide"] = lhs->to_json();
-    json.properties["RightHandSide"] = rhs->to_json();
-    json.properties["Operation_Type"] = TokenTypeNames.at(op);
+    json.properties["left_hand_side"] = lhs->to_json();
+    json.properties["right_hand_side"] = rhs->to_json();
+    json.properties["operation_type"] = TokenTypeNames.at(op);
     return json;
 }
 
 cerne::JSON cerne::Parameter::to_json() {
     cerne::JSON json;
-    json.properties["Unpack"] = std::format("{}", unpack);
-    json.properties["Symbol_Name"] = std::string(symb);
-    json.properties["Type"] = type_to_json(ptype.get());
+    json.properties["unpack"] = std::format("{}", unpack);
+    json.properties["symbol_name"] = std::string(symb);
+    json.properties["parameter_type"] = type_to_json(ptype.get());
     json.properties["type"] = "Parameter";
     return json;
 }
@@ -76,7 +87,7 @@ cerne::JSON cerne::Scope::to_json() {
         const auto& node = body[i];
         nodes_json.push_back(node->to_json());
     }
-    json.properties["Nodes"] = JSONBuilder{}.convert_array(nodes_json);
+    json.properties["nodes"] = JSONBuilder{}.convert_array(nodes_json);
     json.properties["type"] = "Scope";
     return json;
 }
@@ -88,21 +99,21 @@ cerne::JSON cerne::FunNode::to_json() {
         const auto& parameter = parameters[i];
         params_json.push_back(parameter->to_json());
     }
-    json.properties["Parameters"] = JSONBuilder{}.convert_array(params_json);
-    json.properties["Scope"] = body->to_json();
-    json.properties["Return_Type"] = type_to_json(return_type.get());
-    json.properties["Name"] = std::string(name);
+    json.properties["parameters"] = JSONBuilder{}.convert_array(params_json);
+    json.properties["scope"] = body->to_json();
+    json.properties["return_type"] = type_to_json(return_type.get());
+    json.properties["name"] = std::string(name);
     json.properties["type"] = "FunNode";
     return json;
 }
 
 cerne::JSON cerne::VarDecl::to_json() {
     cerne::JSON json;
-    json.properties["Name"] = std::string(name);
-    json.properties["Is_Const"] = std::format("{}", is_const);
-    json.properties["Uninitialized"] = std::format("{}", uninitialized);
-    json.properties["Type"] = type_to_json(var_type.get());
-    json.properties["Value"] = value ? JSONBuilder{value->to_json()}.build() : "null";
+    json.properties["name"] = std::string(name);
+    json.properties["is_const"] = std::format("{}", is_const);
+    json.properties["uninitialized"] = std::format("{}", uninitialized);
+    json.properties["var_type"] = type_to_json(var_type.get());
+    json.properties["value"] = value ? JSONBuilder{value->to_json()}.build() : "null";
     json.properties["type"] = "VarDecl";
     return json;
 }
@@ -114,19 +125,19 @@ cerne::JSON cerne::ReturnStmt::to_json() {
         const auto& value = values[i];
         values_json.push_back(value->to_json());
     }
-    json.properties["Values"] = JSONBuilder{}.convert_array(values_json);
+    json.properties["values"] = JSONBuilder{}.convert_array(values_json);
     json.properties["type"] = "ReturnStmt";
     return json;
 }
 
 cerne::JSON cerne::ImportNode::to_json() {
     cerne::JSON json;
-    json.properties["File_Path"] = file_path;
-    json.properties["User"] = user;
-    json.properties["Package_Path"] = JSONBuilder{}.convert_array(package_path);
-    json.properties["Is_Path"] = std::format("{}", is_path);
-    json.properties["Is_Package"] = std::format("{}", is_package);
-    json.properties["Is_From_User"] = std::format("{}", is_from_user);
+    json.properties["file_path"] = file_path;
+    json.properties["user"] = user;
+    json.properties["package_path"] = JSONBuilder{}.convert_array(package_path);
+    json.properties["is_path"] = std::format("{}", is_path);
+    json.properties["is_package"] = std::format("{}", is_package);
+    json.properties["is_from_user"] = std::format("{}", is_from_user);
     json.properties["type"] = "ImportNode";
     return json;
 }

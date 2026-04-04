@@ -10,5 +10,7 @@
 #include "../../../include/parser/handler.hpp"
 
 std::unique_ptr<cerne::Node> cerne::Export(const blueprint_arguments& args) {
+    const auto& machine = args.machine;
+
     return nullptr; //temporary
 }

@@ -82,15 +82,15 @@ namespace cerne {
         {"my_space" (is_member=false),"my_member_object" (is_member=true),"specific_struct" (is_member=false)}
     */
 
-    typedef struct TypePathElement {
+    struct TypePathElement {
         std::string_view name;
         // not member? it's probably a property access then
         bool is_member;
-    } TypePathElement;
+    };
     
     using TypePath = std::vector<TypePathElement>;
 
-    typedef struct Type {
+    struct Type {
         TypeData data;
 
         // by default, a type is NOT const
@@ -103,16 +103,16 @@ namespace cerne {
         // by default, types are also not templates (obviously)
         // they can tho, which is why it's an "optional" field
         std::unique_ptr<Type> templated_type = nullptr;
-    } Type;
+    };
 
-    typedef struct Symbol {
+    struct Symbol {
         std::string_view name;
         size_t scope;
         Type type;
-    } Symbol;
+    };
 
     // ID [u64] : Symbol
-    typedef std::map<size_t, Symbol> symbol_table;
+    using symbol_table = std::map<size_t, Symbol>;
 }
 
 #endif

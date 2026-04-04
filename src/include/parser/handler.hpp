@@ -19,9 +19,9 @@ namespace cerne {
      * mnemonic blueprints return the amount of extra tokens read after offset
      * offset is the offset in which the mnemonic is localized in the token list
      */
-    typedef struct Blueprint_Arguments {
+    struct blueprint_arguments {
         cerne::ParseMachine* machine;
-    } blueprint_arguments;
+    };
 
     /**
      * Common blueprints are regular blueprints that simply hold the same logic that can be used for multiple mnemonics at the same time

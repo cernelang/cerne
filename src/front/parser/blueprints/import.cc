@@ -100,7 +100,7 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
             const auto& import_path = follow_import_path(args); 
 
             // we can just return nullptr since skip_to_next_end is handled by follow_import_path's error handling
-            if(import_path.size() == 0) return nullptr;
+            if(import_path.empty()) return nullptr;
 
             current_import->is_from_user = true;
             current_import->user = *(current_token.value);
@@ -118,7 +118,7 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
                 cerne::code_snippet(
                     machine->code_sv,
                     next.span,
-                    std::format("Unexpected '{}' after '{}' in the import statement", TokenTypeNames.at(next.type), TokenTypeNames.at(current_token.type))
+                    std::format("Unexpected '{}' after '{}' in the import statement", *(next.value), *(current_token.value))
                 ),
                 next.span,
                 std::format(
@@ -137,16 +137,19 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
                     cerne::example(
                         std::format(
                             "Following are a couple of valid and invalid examples of import statements:\n・ {}import package.submodule{} \t-> valid package import\n・ {}import user::package{} \t-> valid user package import \n・ {}import user!package{} \t\t-> invalid import statement",
-                            RESET BG "233m",
+                            RESET BOLD BG "233m",
                             std::format("{}{}", RESET BOLD, ce_colors::fgwhite),
-                            RESET BG "233m",
+                            RESET BOLD BG "233m",
                             std::format("{}{}", RESET BOLD, ce_colors::fgwhite),
-                            RESET BG "233m",
+                            RESET BOLD BG "233m",
                             std::format("{}{}", RESET BOLD, ce_colors::fgwhite)
                         )
                     )
                 )
             );
+            machine->skip_to_next_end();
+            machine->errors++;
+            return nullptr;
         }
     }
 

@@ -45,13 +45,13 @@ namespace cerne {
 
     // a node (in it's core) just consists of it's type and the location
     // everything else is just specific sub-node metadata
-    typedef struct Node {
+    struct Node {
         NodeType type;
         Span span;
         Node(NodeType t, Span s) : type(t), span(s) {};
         virtual JSON to_json() = 0;
         virtual ~Node() = default; 
-    } Node;
+    };
     
     // SUB NODES BEGIN HERE
 
@@ -59,31 +59,31 @@ namespace cerne {
      * Leafs are used for expressions
      * they hold the value of a literal such as a number or a string
      */
-    typedef struct Leaf : Node {
+    struct Leaf : Node {
         std::unique_ptr<std::string> value;
         bool is_number;
 
         Leaf(Span s, std::unique_ptr<std::string> v, bool is_num = false) : Node(NodeType::Leaf, s), value(std::move(v)), is_number(is_num) {};
 
         JSON to_json() override;
-    } Leaf;
+    };
 
     /**
      * LiteralExpr are also used for expressions
      * despire the name, they simply store the specific identifiers
      */
-    typedef struct LiteralExpr : Node {
+    struct LiteralExpr : Node {
         std::unique_ptr<std::string> value;
 
         LiteralExpr(Span s, std::unique_ptr<std::string> value) : Node(NodeType::LiteralExpr, s), value(std::move(value)) {};
 
         JSON to_json() override;
-    } LiteralExpr;
+    };
 
     /**
      * a + b
      */
-    typedef struct BinaryExpr : Node {
+    struct BinaryExpr : Node {
         // left hand-side node & right hand-side
         std::unique_ptr<Node> lhs;
         std::unique_ptr<Node> rhs;
@@ -100,10 +100,10 @@ namespace cerne {
         ) : Node(NodeType::BinaryExpr, s), lhs(std::move(lhs)), rhs(std::move(rhs)), op(op) {};
     
         JSON to_json() override;
-    } BinaryExpr;
+    };
 
     // x: int
-    typedef struct Parameter : Node {
+    struct Parameter : Node {
         // <> (get all remaining parameters in front of it)
         bool unpack;
 
@@ -121,32 +121,32 @@ namespace cerne {
         ) : Node(NodeType::Parameter, s), unpack(u), symb(name) {};
         
         JSON to_json() override;
-    } Parameter;
+    };
     
     // {Scope}
-    typedef struct Scope : Node {
+    struct Scope : Node {
         // the body of a scope is just a bunch of nodes, kinda like a program node
         std::vector<std::unique_ptr<Node>> body;
 
         // constructor for the scope node, with a default (empty) span
-        explicit Scope(Span s = {}) : Node(NodeType::Scope, s) {};
+        explicit Scope(const Span s = {}) : Node(NodeType::Scope, s) {};
         
         JSON to_json() override;
-    } Scope;
+    };
 
     /**
      * return <expr>, <expr>, ... <end>
      */
-    typedef struct ReturnStmt : Node {
+    struct ReturnStmt : Node {
         std::vector<std::unique_ptr<Node>> values;
 
-        explicit ReturnStmt(Span s) : Node(NodeType::ReturnStmt, s) {};
+        explicit ReturnStmt(const Span s) : Node(NodeType::ReturnStmt, s) {};
 
         JSON to_json() override;
-    } ReturnStmt;
+    };
 
     // function definitions require a body, parameters, a return type and a name. every single one.
-    typedef struct FunNode : Node {
+    struct FunNode : Node {
         // () {}
         std::vector<std::unique_ptr<Parameter>> parameters;
         std::unique_ptr<Scope> body;
@@ -159,7 +159,7 @@ namespace cerne {
 
         // constructor for the function node (as in function definition, not declaration nor call)
         explicit FunNode(
-            Span span,
+            const Span span,
             std::vector<std::unique_ptr<Parameter>> parameters, 
             std::unique_ptr<Scope> body, 
             std::unique_ptr<Type> return_type, 
@@ -167,10 +167,10 @@ namespace cerne {
         ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name) {};
         
         JSON to_json() override;
-    } FunNode;
+    };
 
     // variable declaration
-    typedef struct VarDecl : Node {
+    struct VarDecl : Node {
         std::string_view name;
         bool is_const;
         bool uninitialized;
@@ -178,7 +178,7 @@ namespace cerne {
         std::unique_ptr<Node> value;
 
         explicit VarDecl(
-            Span span,
+            const Span span,
             std::string_view name,
             bool is_const,
             bool uninitialized,
@@ -187,11 +187,11 @@ namespace cerne {
         ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
 
         JSON to_json() override;
-    } VarDecl;
+    };
 
     // import and export nodes
 
-    typedef struct ImportNode : Node {
+    struct ImportNode : Node {
         std::string file_path;
         std::string user;
         std::vector<std::string> package_path;
@@ -199,13 +199,13 @@ namespace cerne {
         bool is_package = false;
         bool is_from_user = false;
 
-        explicit ImportNode(Span span) : Node(NodeType::Import, span) {};
+        explicit ImportNode(const Span span) : Node(NodeType::Import, span) {};
 
         JSON to_json() override;
-    } ImportNode;
+    };
     
     // global node
-    typedef struct Program : Node {
+    struct Program : Node {
         std::vector<std::unique_ptr<Node>> node_list;
 
         // constructor for the program node, no need for a span since it's just a container for the whole program
@@ -223,7 +223,7 @@ namespace cerne {
             
             return json->json;
         };
-    } Program;
+    };
 
     /**
      * AST class responsible for containing the root of the program tree
