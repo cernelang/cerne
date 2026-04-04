@@ -9,7 +9,7 @@
 */
 const   fs = require("fs"),
         path = require("path"),
-        { exec } = require("child_process");
+        { spawnSync } = require("child_process");
 
 // currently, we're on the test folder, so tests are run on ./tests
 const test_dir = "./tests";
@@ -32,43 +32,41 @@ function run(tests) {
             const expected = test.endsWith("_fail.ce") ? false : true;
 
             // run the test with the cerne executable and capture output
-            exec(`${cerne_executable} ${test} --dump=ast`, (err, stdout, stderr) => {
+            const { error } = spawnSync(cerne_executable, [test, "--dump=ast"], { encoding: "utf-8" });
+            if(error) {
+                console.error(`[cerne] [test]: Error running test ${test}:`, error);
+                all_passed = false;
+                continue;
+            }
+
+            /*
+                now we check if the output actually matches
+                when dumping, cerne's compiler outputs a JSON with the AST and error/warning counts
+                this JSON is stored in a file with the same name along with .ast.json extension
+                so we can read that file and immediately parse and check the error count
+            */
+            const output_path = `${test}.ast.json`;
+            fs.readFile(output_path, "utf-8", (err, data) => {
                 if(err) {
-                    console.error(`[cerne] [test]: Error running test ${test}:`, err);
+                    console.error(`[cerne] [test]: Error reading output file for test ${test}:`, err);
                     all_passed = false;
                     return;
                 }
-
-                /*
-                    now we check if the output actually matches
-                    when dumping, cerne's compiler outputs a JSON with the AST and error/warning counts
-                    this JSON is stored in a file with the same name along with .ast.json extension
-                    so we can read that file and immediately parse and check the error count
-                */
-                const output_path = `${test}.ast.json`;
-                fs.readFile(output_path, "utf-8", (err, data) => {
-                    if(err) {
-                        console.error(`[cerne] [test]: Error reading output file for test ${test}:`, err);
-                        all_passed = false;
-                        return;
-                    }
-                    
-                    // try to parse the JSON
-                    try {
-                        const output = JSON.parse(data);
-                        const has_errors = output.errors > 0;
-                        if(has_errors !== expected) {
-                            console.error(`[cerne] [test]: Test ${test} failed. Expected errors: ${!expected}, Actual errors: ${has_errors}`);
-                            all_passed = false;
-                        }
-                    } catch(parse_err) {
-                        console.error(`[cerne] [test]: Error parsing output JSON for test ${test}:`, parse_err);
+                
+                // try to parse the JSON
+                try {
+                    const output = JSON.parse(data);
+                    const has_errors = output.errors > 0;
+                    if(has_errors !== expected) {
+                        console.error(`[cerne] [test]: Test ${test} failed. Expected errors: ${!expected}, Actual errors: ${has_errors}`);
                         all_passed = false;
                     }
+                } catch(parse_err) {
+                    console.error(`[cerne] [test]: Error parsing output JSON for test ${test}:`, parse_err);
+                    all_passed = false;
+                }
 
-                });
-
-            })
+            });
         }
 
         // returns whether all tests have passed with the expected output
