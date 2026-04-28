@@ -14,6 +14,7 @@
 #include "./utils.hpp"
 #include "./lexer.hpp"
 #include "./parser.hpp"
+#include "./sema.hpp"
 
 // cerne version update comes here for now
 struct Version {

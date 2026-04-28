@@ -9,8 +9,15 @@
 */
 #include "../../../include/parser/handler.hpp"
 
+/**
+ * Export should be used to export any symbol from the current module, whether it's a function, a variable, a class, etc...
+ * syntax is very simple, with it being just
+ * export <symbol>;
+ */
 std::unique_ptr<cerne::Node> cerne::Export(const blueprint_arguments& args) {
     const auto& machine = args.machine;
+
+    machine->advance();
 
     return nullptr; //temporary
 }

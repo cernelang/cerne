@@ -44,7 +44,7 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
         }
 
         // after lexing, we pass the token list through the parser to generate an AST
-        const auto& ast = cerne::parse(code_sv, tokens, file, args);
+        auto ast = cerne::parse(code_sv, tokens, file, args);
 
         // after parsing, we pass the AST through SEMA and then to IR generation, for now though, since those haven't been developed yet, the if statement will be blank
         if(ast->errors > 0) {
@@ -60,6 +60,10 @@ void compile_files(const cerne::args& args, std::vector<std::string> files) {
 
         // ast diagnostics
         check_ast_print(args, ast.get());
+
+        // begin SEMA now
+        auto symbtable = std::make_unique<cerne::SymbolTable>(std::move(ast));
+        symbtable->build();
     }
 }
 
