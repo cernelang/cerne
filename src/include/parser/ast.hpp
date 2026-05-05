@@ -26,6 +26,7 @@ namespace cerne {
         FunNode,
         VarDecl,
         Import,
+        Export,
         Program
     };
 
@@ -40,6 +41,7 @@ namespace cerne {
         {NodeType::FunNode, "FunNode"},
         {NodeType::VarDecl, "VarDecl"},
         {NodeType::Import, "Import"},
+        {NodeType::Export, "Export"},
         {NodeType::Program, "Program"}
     };
 
@@ -108,7 +110,7 @@ namespace cerne {
         bool unpack;
 
         // name of the variable in the parameter
-        std::string_view symb;
+        std::string name;
 
         // type of the parameter(s)
         std::unique_ptr<Type> ptype;
@@ -117,8 +119,8 @@ namespace cerne {
         Parameter(
             Span s,
             bool u = false,
-            std::string_view name = ""
-        ) : Node(NodeType::Parameter, s), unpack(u), symb(name) {};
+            std::string name = ""
+        ) : Node(NodeType::Parameter, s), unpack(u), name(name) {};
         
         JSON to_json() override;
     };
@@ -155,7 +157,7 @@ namespace cerne {
         std::unique_ptr<Type> return_type;
 
         // identifier
-        std::string_view name;
+        std::string name;
 
         // constructor for the function node (as in function definition, not declaration nor call)
         explicit FunNode(
@@ -163,7 +165,7 @@ namespace cerne {
             std::vector<std::unique_ptr<Parameter>> parameters, 
             std::unique_ptr<Scope> body, 
             std::unique_ptr<Type> return_type, 
-            std::string_view name
+            std::string name
         ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name) {};
         
         JSON to_json() override;
@@ -171,7 +173,7 @@ namespace cerne {
 
     // variable declaration
     struct VarDecl : Node {
-        std::string_view name;
+        std::string name;
         bool is_const;
         bool uninitialized;
         std::unique_ptr<Type> var_type;
@@ -179,7 +181,7 @@ namespace cerne {
 
         explicit VarDecl(
             const Span span,
-            std::string_view name,
+            std::string name,
             bool is_const,
             bool uninitialized,
             std::unique_ptr<Type> var_type,
@@ -203,7 +205,15 @@ namespace cerne {
 
         JSON to_json() override;
     };
-    
+
+    struct ExportNode : Node {
+        std::string symbol;
+
+        explicit ExportNode(const Span span, std::string symbol) : Node(NodeType::Export, span), symbol(symbol) {};
+
+        JSON to_json() override;
+    };
+
     // global node
     struct Program : Node {
         std::vector<std::unique_ptr<Node>> node_list;

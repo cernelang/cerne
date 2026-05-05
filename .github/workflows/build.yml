@@ -1,0 +1,68 @@
+name: build cerne
+
+# if someone pushes a tag starting with "v", we know it's a release, so this build will run
+on:
+    push:
+        tags:
+            - "v*"
+
+jobs:
+    build:
+        name: build on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, windows-latest, macos-latest]
+        outputs:
+            release_tag: ${{ github.ref_name }}
+        steps:
+            # actually build cerne
+            -   uses: actions/checkout@v4
+            -   name: configure and build
+                run: |
+                    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+                    cmake --build build --config Release
+
+            # rename files to be more consistent across platforms
+            -   name: prepare artifacts
+                shell: bash
+                run: |
+                    if [ "${{ runner.os }}" == "Windows" ]; then
+                        mv build/Release/cerne.exe build/cerne-windows.exe
+                    elif [ "${{ runner.os }}" == "macOS" ]; then
+                        mv build/cerne build/cerne-macos
+                    else
+                        mv build/cerne build/cerne-linux
+                    fi
+            
+            # temporary upload of the artifacts
+            -   name: upload artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: binaries-${{ matrix.os }}
+                    path: build/cerne*
+    
+    # after building on all platforms, we need to create the actual github release
+    release:
+        name: create release
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            -   name: download all binaries
+                uses: actions/download-artifact@v4
+                with:
+                    path: all-binaries
+                    merge-multiple: true
+
+            -   name: create release
+                uses: softprops/action-gh-release@v2
+                with:
+                    tag_name: ${{ github.ref_name }}
+                    name: Cerne ${{ github.ref_name }}
+                    # important notice
+                    body: |
+                        ## Important Notice
+                        Since this is a v0.x.x (alpha) release, keep in mind this is **NOT** supposed to work exactly as intended...
+                    draft: false
+                    prerelease: true
+                    files: all-binaries/*

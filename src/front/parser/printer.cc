@@ -74,7 +74,7 @@ cerne::JSON cerne::BinaryExpr::to_json() {
 cerne::JSON cerne::Parameter::to_json() {
     cerne::JSON json;
     json.properties["unpack"] = std::format("{}", unpack);
-    json.properties["symbol_name"] = std::string(symb);
+    json.properties["symbol_name"] = name;
     json.properties["parameter_type"] = type_to_json(ptype.get());
     json.properties["type"] = "Parameter";
     return json;
@@ -102,14 +102,14 @@ cerne::JSON cerne::FunNode::to_json() {
     json.properties["parameters"] = JSONBuilder{}.convert_array(params_json);
     json.properties["scope"] = body->to_json();
     json.properties["return_type"] = type_to_json(return_type.get());
-    json.properties["name"] = std::string(name);
+    json.properties["name"] = name;
     json.properties["type"] = "FunNode";
     return json;
 }
 
 cerne::JSON cerne::VarDecl::to_json() {
     cerne::JSON json;
-    json.properties["name"] = std::string(name);
+    json.properties["name"] = name;
     json.properties["is_const"] = std::format("{}", is_const);
     json.properties["uninitialized"] = std::format("{}", uninitialized);
     json.properties["var_type"] = type_to_json(var_type.get());
@@ -139,6 +139,13 @@ cerne::JSON cerne::ImportNode::to_json() {
     json.properties["is_package"] = std::format("{}", is_package);
     json.properties["is_from_user"] = std::format("{}", is_from_user);
     json.properties["type"] = "ImportNode";
+    return json;
+}
+
+cerne::JSON cerne::ExportNode::to_json() {
+    cerne::JSON json;
+    json.properties["symbol"] = symbol;
+    json.properties["type"] = "ExportNode";
     return json;
 }
 

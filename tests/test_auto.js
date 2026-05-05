@@ -11,11 +11,18 @@ const   fs = require("fs"),
         path = require("path"),
         { spawnSync } = require("child_process");
 
-// currently, we're on the test folder, so tests are run on ./tests
-const test_dir = "./tests";
+/*
+    currently, we're on the test folder, so tests are run on ./
+
+    important notice! 
+    if you're not in cerne/tests in your terminal, you should do cd tests before running this test file, 
+    otherwise the paths won't work and you'll technically be running "0" tests 
+    thus getting a "everything passed" message
+*/
+const test_dir = "./";
 
 // the executable should be in the root directory, so we can run it with ./cerne
-const cerne_executable = "../cerne";
+const cerne_executable = "../build/cerne";
 
 /**
  * Utility function to run a list of test files with the Cerne Compiler
@@ -45,32 +52,35 @@ function run(tests) {
                 this JSON is stored in a file with the same name along with .ast.json extension
                 so we can read that file and immediately parse and check the error count
             */
+            let delete_file = true;
             const output_path = `${test}.ast.json`;
-            fs.readFile(output_path, "utf-8", (err, data) => {
-                if(err) {
-                    console.error(`[cerne] [test]: Error reading output file for test ${test}:`, err);
-                    all_passed = false;
-                    return;
-                }
-                
-                // try to parse the JSON
-                try {
-                    const output = JSON.parse(data);
-                    const has_errors = output.errors > 0;
-                    if(has_errors !== expected) {
-                        console.error(`[cerne] [test]: Test ${test} failed. Expected errors: ${!expected}, Actual errors: ${has_errors}`);
-                        all_passed = false;
-                    }
-                } catch(parse_err) {
-                    console.error(`[cerne] [test]: Error parsing output JSON for test ${test}:`, parse_err);
-                    all_passed = false;
-                }
+            try {
+                const data = fs.readFileSync(output_path, "utf-8");
+                const output = JSON.parse(data);
+                const has_errors = output.errors > 0;
 
-            });
+                if(has_errors === expected) {
+                    console.error(`[cerne] [test]: Test ${test} failed. Expected errors: ${!expected}, Actual errors: ${has_errors}`);
+                    all_passed = false;
+                }
+            } catch(err) {
+                console.error(`[cerne] [test]: Error reading or parsing output for test ${test}:`, err);
+                all_passed = false;
+                delete_file = false; // don't delete the output file so we can manually check what's wrong
+            }
+
+            // now remove the output file to keep the tests directory clean
+            if(delete_file) {
+                fs.unlink(output_path, err => {
+                    if(err) {
+                        console.error(`[cerne] [test]: Error removing output file for test ${test}:`, err);
+                    }
+                });
+            }
         }
 
         // returns whether all tests have passed with the expected output
-        return all_passed;
+        resolve(all_passed);
     });
 }
 
@@ -88,7 +98,7 @@ fs.readdir(test_dir, (err, files) => {
     // test runner
     run(test_files).then(success => {
         if(success) {
-            console.log("[cerne] [test]: Output was as expected for all tests.");
+            console.log(`[cerne] [test (${test_files.length} tests)]: Output was as expected for all tests.`);
         } else {
             console.error("[cerne] [test]: Output did not match expected output for some tests. Check the logs above for details.");
         }

@@ -93,6 +93,7 @@ namespace cerne {
 
             /**
              * Utility for better expected messages (combines peek, match AND check_eof in one function)
+             * returns whether the expected token matches
              */
             bool expect(TokenTypes type, bool just_check = false);
             bool expect_or(std::vector<TokenTypes> types, bool just_check = false);

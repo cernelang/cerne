@@ -19,5 +19,19 @@ std::unique_ptr<cerne::Node> cerne::Export(const blueprint_arguments& args) {
 
     machine->advance();
 
-    return nullptr; //temporary
+    // for now, the next token has to be an identifier
+    if(!machine->expect(TokenTypes::IDENTIFIER)) {
+        machine->errors++;
+        return nullptr;
+    }
+
+    // current token is already the identifier so need to advance
+    const auto& identifier = machine->peek();
+
+    auto export_node = std::make_unique<ExportNode>(
+        identifier.span,
+        *(identifier.value)
+    );
+
+    return export_node;
 }
