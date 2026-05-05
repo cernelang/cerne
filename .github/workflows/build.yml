@@ -6,9 +6,6 @@ on:
         tags:
             - "v*"
 
-permissions:
-    contents: write
-
 jobs:
     build:
         name: build on ${{ matrix.os }}
@@ -50,6 +47,8 @@ jobs:
         name: create release
         needs: build
         runs-on: ubuntu-latest
+        permissions:
+            contents: write 
         steps:
             -   name: download all binaries
                 uses: actions/download-artifact@v4
