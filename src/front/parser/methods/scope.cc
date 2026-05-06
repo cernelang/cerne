@@ -13,20 +13,20 @@
  * Subparse method responsible for parsing a scope
  */
 std::unique_ptr<cerne::Scope> cerne::ParseMachine::parse_scope() {
-    auto& start_token = list[offset];
+    const auto& start_token = list[offset];
     offset++;
 
-    auto scope = std::make_unique<cerne::Scope>();
+    auto scope_node = std::make_unique<cerne::Scope>();
 
     // parse everything until end of scope
     while(list[offset].type != TokenTypes::END_SCOPE && offset < list.size()) {
         auto node = parse(list[offset]);
-        if(node) scope->body.push_back(std::move(node));
+        if(node) scope_node->body.push_back(std::move(node));
         offset++;
     }
     
     // if file ended without closing scope
-    if(list[offset].type != TokenTypes::END_SCOPE && offset >= list.size() && options.flags.find("quiet") == options.flags.end()) {
+    if(list[offset].type != TokenTypes::END_SCOPE && offset >= list.size() && !options.flags.contains("quiet")) {
         cerne::cerror(
             file_path,
             ERR_OPEN_SCOPE,
@@ -41,5 +41,5 @@ std::unique_ptr<cerne::Scope> cerne::ParseMachine::parse_scope() {
         errors++;
     }
 
-    return scope;
+    return scope_node;
 }

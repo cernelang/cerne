@@ -9,8 +9,6 @@
 */
 #include "../../include/sema/symbtable.hpp"
 
-
-
 void cerne::SymbolTable::build() {
     const auto& node_list = ast->root->node_list;
 

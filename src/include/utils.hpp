@@ -95,7 +95,7 @@ namespace cerne {
             ~CLI()=default;
 
             // others
-            void event(std::string name, callback cb);
+            void event(const std::string& name, callback cb) const;
             void help() const;
     };
 

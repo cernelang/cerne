@@ -16,14 +16,12 @@
 std::string type_path_to_json(const cerne::TypePath& typepath) {
     std::vector<cerne::JSON> elements_json;
 
-    for(size_t i = 0; i < typepath.size(); i++) {
-        const auto& element = typepath[i];
-
+    std::ranges::for_each(typepath, [&](const cerne::TypePathElement& element) {
         cerne::JSON element_json;
         element_json.properties["name"] = std::string(element.name);
         element_json.properties["is_member"] = std::format("{}", element.is_member);
         elements_json.push_back(element_json);
-    }
+    });
 
     return cerne::JSONBuilder{}.convert_array(elements_json);
 }
@@ -95,10 +93,11 @@ cerne::JSON cerne::Scope::to_json() {
 cerne::JSON cerne::FunNode::to_json() {
     cerne::JSON json;
     std::vector<cerne::JSON> params_json;
-    for(size_t i = 0; i < parameters.size(); i++) {
-        const auto& parameter = parameters[i];
+
+    std::ranges::for_each(parameters, [&](const std::unique_ptr<Parameter>& parameter) {
         params_json.push_back(parameter->to_json());
-    }
+    });
+
     json.properties["parameters"] = JSONBuilder{}.convert_array(params_json);
     json.properties["scope"] = body->to_json();
     json.properties["return_type"] = type_to_json(return_type.get());
@@ -121,10 +120,11 @@ cerne::JSON cerne::VarDecl::to_json() {
 cerne::JSON cerne::ReturnStmt::to_json() {
     cerne::JSON json;
     std::vector<cerne::JSON> values_json;
-    for(size_t i = 0; i < values.size(); i++) {
-        const auto& value = values[i];
+    
+    std::ranges::for_each(values, [&](const std::unique_ptr<Node>& value) {
         values_json.push_back(value->to_json());
-    }
+    });
+
     json.properties["values"] = JSONBuilder{}.convert_array(values_json);
     json.properties["type"] = "ReturnStmt";
     return json;

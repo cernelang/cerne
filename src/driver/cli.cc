@@ -50,7 +50,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
 
         if(arg[0] == '-') {
             // initialize next_arg
-            std::string_view next_arg = std::string_view(next);
+            auto next_arg = std::string_view(next);
             
             // if the next argument is a flag, we want to ignore it as a value
             // else, we want the next argument to BE the value and we want to skip it in the next iteration
@@ -83,7 +83,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
  * Handles the events for the CLI
  * taking the type of event (could be a command or "files" to get the files) and calling the appropriate callback function
  */
-void cerne::CLI::event(std::string type, cerne::callback fnc) {
+void cerne::CLI::event(const std::string& type, cerne::callback fnc) const {
     const auto& args = this->__args;
     const auto& flags = args.flags;
     const auto& files = args.files;

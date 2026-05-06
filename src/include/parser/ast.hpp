@@ -119,7 +119,7 @@ namespace cerne {
         Parameter(
             Span s,
             bool u = false,
-            std::string name = ""
+            const std::string& name = ""
         ) : Node(NodeType::Parameter, s), unpack(u), name(name) {};
         
         JSON to_json() override;
@@ -131,7 +131,7 @@ namespace cerne {
         std::vector<std::unique_ptr<Node>> body;
 
         // constructor for the scope node, with a default (empty) span
-        explicit Scope(const Span s = {}) : Node(NodeType::Scope, s) {};
+        explicit Scope(const Span& s = {}) : Node(NodeType::Scope, s) {};
         
         JSON to_json() override;
     };
@@ -142,7 +142,7 @@ namespace cerne {
     struct ReturnStmt : Node {
         std::vector<std::unique_ptr<Node>> values;
 
-        explicit ReturnStmt(const Span s) : Node(NodeType::ReturnStmt, s) {};
+        explicit ReturnStmt(const Span& s) : Node(NodeType::ReturnStmt, s) {};
 
         JSON to_json() override;
     };
@@ -161,11 +161,11 @@ namespace cerne {
 
         // constructor for the function node (as in function definition, not declaration nor call)
         explicit FunNode(
-            const Span span,
+            const Span& span,
             std::vector<std::unique_ptr<Parameter>> parameters, 
             std::unique_ptr<Scope> body, 
             std::unique_ptr<Type> return_type, 
-            std::string name
+            const std::string& name = ""
         ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name) {};
         
         JSON to_json() override;
@@ -180,12 +180,12 @@ namespace cerne {
         std::unique_ptr<Node> value;
 
         explicit VarDecl(
-            const Span span,
-            std::string name,
-            bool is_const,
-            bool uninitialized,
-            std::unique_ptr<Type> var_type,
-            std::unique_ptr<Node> value
+            const Span& span,
+            const std::string& name = "",
+            bool is_const = false,
+            bool uninitialized = false,
+            std::unique_ptr<Type> var_type = nullptr,
+            std::unique_ptr<Node> value = nullptr
         ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
 
         JSON to_json() override;
@@ -201,7 +201,11 @@ namespace cerne {
         bool is_package = false;
         bool is_from_user = false;
 
-        explicit ImportNode(const Span span) : Node(NodeType::Import, span) {};
+        explicit ImportNode(
+            const Span& span, 
+            const std::string& file_path = "", 
+            const std::string& user = ""
+        ) : Node(NodeType::Import, span), file_path(file_path), user(user) {};
 
         JSON to_json() override;
     };
@@ -209,7 +213,10 @@ namespace cerne {
     struct ExportNode : Node {
         std::string symbol;
 
-        explicit ExportNode(const Span span, std::string symbol) : Node(NodeType::Export, span), symbol(symbol) {};
+        explicit ExportNode(
+            const Span& span, 
+            const std::string& symbol = ""
+        ) : Node(NodeType::Export, span), symbol(symbol) {};
 
         JSON to_json() override;
     };

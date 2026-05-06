@@ -14,7 +14,7 @@
  * returns whether the expected token was found or not
  */
 bool cerne::ParseMachine::expect(TokenTypes type, bool just_check) {
-    if(is_eof() && options.flags.find("quiet") == options.flags.end()) {
+    if(is_eof() && !options.flags.contains("quiet")) {
         cerne::cerror(
             file_path,
             ERR_UNEXPECTED_EOF,

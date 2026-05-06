@@ -9,17 +9,19 @@
 */
 #include "../../../include/parser.hpp"
 
+// to reduce verbosity
+using enum cerne::TokenTypes;
 
 // --- parse_parameter() Utils ---
 
 bool checkIdentifier(cerne::ParseMachine* machine, const cerne::Token& id) {
-    if(id.type != cerne::TokenTypes::IDENTIFIER  && machine->options.flags.find("quiet") == machine->options.flags.end()) {
+    if(id.type != IDENTIFIER  && !machine->options.flags.contains("quiet")) {
         cerne::cerror(
             machine->file_path, 
             ERR_UNEXPECTED_TOKEN,
             std::format("Expected {} or {}, instead got {} at {}:{}", 
-                cerne::TokenTypeNames.at(cerne::TokenTypes::UNPACK), 
-                cerne::TokenTypeNames.at(cerne::TokenTypes::IDENTIFIER), 
+                cerne::TokenTypeNames.at(UNPACK), 
+                cerne::TokenTypeNames.at(IDENTIFIER), 
                 cerne::TokenTypeNames.at(id.type), 
                 id.span.line, 
                 id.span.col
@@ -62,12 +64,12 @@ void update_parameter(cerne::ParseMachine* machine, cerne::Parameter* param) {
     const auto& define = machine->list[machine->offset];
 
     // if there isn't a type in front of the parameter identifier (like param_name instead of param_name: int), just return
-    if(define.type != cerne::TokenTypes::DEFINE) return;
+    if(define.type != DEFINE) return;
 
     // if there is, we move on to the next token, check for EOF and then parse the type and update the parameter's ptype
     machine->offset++;
 
-    if(!machine->expect(cerne::TokenTypes::IDENTIFIER)) return;
+    if(!machine->expect(IDENTIFIER)) return;
 
     auto type = machine->parse_type(false);
     if(type->data != cerne::TypeData::UNKNOWN) {
@@ -83,13 +85,13 @@ void update_parameter(cerne::ParseMachine* machine, cerne::Parameter* param) {
  */
 std::unique_ptr<cerne::Parameter> cerne::ParseMachine::parse_parameter() {
     // first token MUST BE an unpack token or an identifier.
-    if(!expect(TokenTypes::UNPACK) && !expect(TokenTypes::IDENTIFIER)) return nullptr;
+    if(!expect(UNPACK) && !expect(IDENTIFIER)) return nullptr;
 
     const auto& first = list[offset];
 
-    if(first.type == TokenTypes::UNPACK) {
+    if(first.type == UNPACK) {
         offset++;
-        if(!expect(TokenTypes::IDENTIFIER)) return nullptr;
+        if(!expect(IDENTIFIER)) return nullptr;
 
         const auto& id = list[offset];
         // get identifier (if the next token is one) and define the parameter and push it

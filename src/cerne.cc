@@ -29,7 +29,7 @@ void check_ast_print(const cerne::args& args, const cerne::AST* ast, bool error 
 /**
  * Compilation pipeline
  */
-void compile_files(const cerne::args& args, std::vector<std::string> files) {
+void compile_files(const cerne::args& args, const std::vector<std::string>& files) {
     for(size_t i = 0; i < files.size(); i++) {
         // first, we read the file's content
         const char* file = files[i].c_str();
@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
     const auto& args = cerne::parse_args(argc, argv);
     auto cli = std::make_unique<cerne::CLI>(args);
 
-    cli->event("files", [&args](std::vector<std::string> files) {
+    cli->event("files", [&args](const std::vector<std::string>& files) {
         compile_files(args, files);
     });
 

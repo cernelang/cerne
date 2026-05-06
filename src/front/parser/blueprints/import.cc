@@ -9,6 +9,9 @@
 */
 #include "../../../include/parser/handler.hpp"
 
+// reduce verbosity
+using enum cerne::TokenTypes;
+
 /**
  * Simple utility to follow the import path
  */
@@ -16,19 +19,19 @@ std::vector<std::string> follow_import_path(const cerne::blueprint_arguments& ar
     const auto& machine = args.machine;
     std::vector<std::string> path;
 
-    if(!machine->expect(cerne::TokenTypes::IDENTIFIER)) return path;
+    if(!machine->expect(IDENTIFIER)) return path;
 
     while(machine->offset < machine->list.size()) {
-        if(!machine->expect_or({cerne::TokenTypes::IDENTIFIER, cerne::TokenTypes::DOT}, true)) break;
+        if(!machine->expect_or({IDENTIFIER, DOT}, true)) break;
 
         const auto& current = machine->peek();
 
         // we simply push everytime there's an identifier, if there's a dot we just keep going
-        if(current.type == cerne::TokenTypes::IDENTIFIER) {
+        if(current.type == IDENTIFIER) {
             path.push_back(*(current.value));
         } else {
             machine->advance();
-            if(!machine->expect(cerne::TokenTypes::IDENTIFIER)) return {}; // if after the dot there's no identifier, then it's an error and we return an empty path
+            if(!machine->expect(IDENTIFIER)) return {}; // if after the dot there's no identifier, then it's an error and we return an empty path
 
             // else we push the identifier after the dot and keep going
             const auto& nextafterdot = machine->peek();
@@ -57,10 +60,10 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
     machine->advance();
 
     if(!machine->expect_or({ 
-        TokenTypes::IDENTIFIER, 
-        TokenTypes::STRING, 
-        TokenTypes::SSTRING, 
-        TokenTypes::FSTRING 
+        IDENTIFIER, 
+        STRING, 
+        SSTRING, 
+        FSTRING 
     })) return nullptr;
 
     // already create an import node
@@ -69,9 +72,9 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
 
     // if it's a string, then it's a file path import, in which we can simply set the file path and return
     if(
-        current_token.type == TokenTypes::STRING ||
-        current_token.type == TokenTypes::SSTRING ||
-        current_token.type == TokenTypes::FSTRING
+        current_token.type == STRING ||
+        current_token.type == SSTRING ||
+        current_token.type == FSTRING
     ) {
         current_import->file_path = *(current_token.value);
     } else {
@@ -85,12 +88,12 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
         
         const auto& next = machine->peek(1);
 
-        if (next.type == TokenTypes::DOT) {
+        if (next.type == DOT) {
             // it's a package
             const auto& import_path = follow_import_path(args); // in this case, import_path is GUARANTEED to have at least 1 member (the first identifier), so no need to worry about error checking
             current_import->is_package = true;
             current_import->package_path = import_path;
-        } else if(next.type == TokenTypes::MEMBER_ACCESS) {
+        } else if(next.type == MEMBER_ACCESS) {
             // it's a user
 
             // advance the member access token to get the package path
@@ -105,7 +108,7 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
             current_import->is_from_user = true;
             current_import->user = *(current_token.value);
             current_import->package_path = import_path;
-        } else if(next.type == TokenTypes::END) {
+        } else if(next.type == END) {
             // regular identifier import means it's just a single package import with nothing special about it, so we just set the package path to the identifier and set the is_package flag to true
             current_import->is_package = true;
             current_import->package_path.push_back(*(current_token.value));

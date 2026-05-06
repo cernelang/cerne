@@ -24,7 +24,7 @@ void push_type_path_element(cerne::ParseMachine* machine, cerne::Type* type, boo
     if(machine->expect(cerne::TokenTypes::IDENTIFIER)) return;
 
     const auto& next = machine->list[machine->offset];
-    if(next.type != cerne::TokenTypes::IDENTIFIER && machine->options.flags.find("quiet") == machine->options.flags.end()) {
+    if(next.type != cerne::TokenTypes::IDENTIFIER && !machine->options.flags.contains("quiet")) {
         cerne::cerror(
             machine->file_path,
             ERR_UNEXPECTED_TOKEN,
@@ -80,7 +80,7 @@ std::unique_ptr<cerne::Type> cerne::ParseMachine::parse_type(bool is_nested = fa
     // first token MUST BE an identifier
     const auto& first = list[offset];
 
-    if(first.type != TokenTypes::IDENTIFIER && options.flags.find("quiet") == options.flags.end()) {
+    if(first.type != TokenTypes::IDENTIFIER && !options.flags.contains("quiet")) {
         cerne::cerror(
             file_path,
             ERR_UNEXPECTED_TOKEN,
@@ -108,7 +108,7 @@ std::unique_ptr<cerne::Type> cerne::ParseMachine::parse_type(bool is_nested = fa
                 std::string type_name = *token.value.get();
                 
                 // check if it's a primitive type
-                if(cerne::primitive_types.find(type_name) != primitive_types.end()) {
+                if(cerne::primitive_types.contains(type_name)) {
                     // if it is a primitive type, create the primitive type struct and update our type's parameters (we won't leave the loop since there are templated primitive types) 
                     auto primitive = primitive_types.at(type_name);
                     type->data = cerne::TypeData::PRIMITIVE;
