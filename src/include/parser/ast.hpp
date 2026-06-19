@@ -13,48 +13,9 @@
 #include "../utils.hpp"
 #include "../lexer.hpp"
 #include "types.hpp"
+#include "node.hpp"
 
 namespace cerne {
-    // now we start declaring what a node even is
-    enum class NodeType {
-        Leaf,
-        LiteralExpr,
-        BinaryExpr,
-        Parameter,
-        Scope,
-        ReturnStmt,
-        FunNode,
-        VarDecl,
-        Import,
-        Export,
-        Program
-    };
-
-    // nodetypenames
-    const std::map<NodeType, std::string> NodeTypeNames = {
-        {NodeType::Leaf, "Leaf"},
-        {NodeType::LiteralExpr, "LiteralExpr"},
-        {NodeType::BinaryExpr, "BinaryExpr"},
-        {NodeType::Parameter, "Parameter"},
-        {NodeType::Scope, "Scope"},
-        {NodeType::ReturnStmt, "ReturnStmt"},
-        {NodeType::FunNode, "FunNode"},
-        {NodeType::VarDecl, "VarDecl"},
-        {NodeType::Import, "Import"},
-        {NodeType::Export, "Export"},
-        {NodeType::Program, "Program"}
-    };
-
-    // a node (in it's core) just consists of it's type and the location
-    // everything else is just specific sub-node metadata
-    struct Node {
-        NodeType type;
-        Span span;
-        Node(NodeType t, Span s) : type(t), span(s) {};
-        virtual JSON to_json() = 0;
-        virtual ~Node() = default; 
-    };
-    
     // SUB NODES BEGIN HERE
 
     /**
@@ -65,7 +26,10 @@ namespace cerne {
         std::unique_ptr<std::string> value;
         bool is_number;
 
-        Leaf(Span s, std::unique_ptr<std::string> v, bool is_num = false) : Node(NodeType::Leaf, s), value(std::move(v)), is_number(is_num) {};
+        explicit Leaf(
+            Span s, 
+            std::unique_ptr<std::string> v, bool is_num = false
+        ) : Node(NodeType::Leaf, s), value(std::move(v)), is_number(is_num) {};
 
         JSON to_json() override;
     };
@@ -77,7 +41,10 @@ namespace cerne {
     struct LiteralExpr : Node {
         std::unique_ptr<std::string> value;
 
-        LiteralExpr(Span s, std::unique_ptr<std::string> value) : Node(NodeType::LiteralExpr, s), value(std::move(value)) {};
+        explicit LiteralExpr(
+            Span s, 
+            std::unique_ptr<std::string> value
+        ) : Node(NodeType::LiteralExpr, s), value(std::move(value)) {};
 
         JSON to_json() override;
     };
@@ -94,7 +61,7 @@ namespace cerne {
         TokenTypes op;
 
         // constructor for binary expression
-        BinaryExpr(
+        explicit BinaryExpr(
             Span s,
             std::unique_ptr<Node> lhs,
             std::unique_ptr<Node> rhs,
@@ -116,7 +83,7 @@ namespace cerne {
         std::unique_ptr<Type> ptype;
 
         // constructor for the parameter node
-        Parameter(
+        explicit Parameter(
             Span s,
             bool u = false,
             const std::string& name = ""

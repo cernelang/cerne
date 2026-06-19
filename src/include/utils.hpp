@@ -91,7 +91,7 @@ namespace cerne {
 
         public:
             // constructor and destructor
-            CLI(const args& _args) : __args(_args) {};
+            explicit CLI(const args& _args) : __args(_args) {};
             ~CLI()=default;
 
             // others

@@ -12,6 +12,7 @@
 
 #include "../utils.hpp"
 #include "../lexer.hpp"
+#include "node.hpp"
 
 namespace cerne {
     
@@ -83,7 +84,7 @@ namespace cerne {
     */
 
     struct TypePathElement {
-        std::string_view name;
+        std::string name;
         // not member? it's probably a property access then
         bool is_member;
     };
@@ -105,8 +106,49 @@ namespace cerne {
         std::unique_ptr<Type> templated_type = nullptr;
     };
 
+    struct CallData {
+        std::vector<std::unique_ptr<Node>> parameters;
+    };
+
+    struct InitializerElement {
+        std::string key;
+        Span key_span;
+
+        // nodes always have spans so we don't need to worry about value_span
+        std::unique_ptr<Node> value;
+    };
+
+    struct InitializerData {
+        bool is_keyed; // {.prop=value} or {value}
+        std::vector<InitializerElement> values;
+    };
+
+    // forward define path
+    struct Path;
+
+    struct BasicPathElement {
+        std::string name;
+        bool is_member;
+
+        // calls/class initializers can be part of the path
+        std::unique_ptr<CallData> call = nullptr;
+        std::unique_ptr<InitializerData> initializer = nullptr;
+        
+        // generics can also be part of the path, so for example my_function<int, str>()
+        std::vector<std::unique_ptr<Path>> generic_args = {};
+    };
+
+    using BasicPath = std::vector<BasicPathElement>;
+
+    struct Path {
+        BasicPath basic_path;
+
+        // if there are no calls or initializers, this path is considered a type path
+        bool pure_path;
+    };
+
     struct Symbol {
-        std::string_view name;
+        std::string name;
         size_t scope;
         Type type;
     };

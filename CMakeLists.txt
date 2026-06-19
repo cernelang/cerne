@@ -13,6 +13,17 @@ project(cerne LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# set which compiler to use (msvc, clang or g++)
+if(MSVC)
+    set(CMAKE_CXX_COMPILER "cl")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_CXX_COMPILER "clang++")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_CXX_COMPILER "g++")
+else()
+    message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
+endif()
+
 # source files
 file(GLOB_RECURSE SOURCES "src/*.cc")
 
@@ -25,6 +36,7 @@ target_include_directories(cerne PRIVATE "src/include")
 # during development, sanitizers are useful, but when releasing valgrind is a bit better, and since valgrind can't accept a binary with sanitizers on, this should be an option
 option(USE_SANITIZERS "Use sanitizers during development" OFF)
 
+# sanitizers are not supported on MSVC
 if(USE_SANITIZERS)
     if(MSVC)
         message(WARNING "Sanitizers are not supported on MSVC, ignoring USE_SANITIZERS option.")

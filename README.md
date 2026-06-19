@@ -54,7 +54,7 @@ More details: https://docs.cerne.space/
 You can build cerne from source using CMake. This means that you can build cerne cross-platform (Linux, MacOS, Windows).
 
 ### Requirements
-- C++20 Compiler (G++, Clang, MSVC, ...)
+- C++20 Compiler (G++, Clang, MSVC)
 - CMake ー **Version 3.15 or higher**
 
 ### Build Example

@@ -51,10 +51,11 @@ namespace cerne {
             bool is_eof() const { return offset >= list.size(); };
 
             // subparse methods
-            std::unique_ptr<Node> parse_mnemonic();
-            std::unique_ptr<Scope> parse_scope();
             std::unique_ptr<Parameter> parse_parameter();
+            std::unique_ptr<Scope> parse_scope();
+            std::unique_ptr<Path> parse_path(bool strict = false);
             std::unique_ptr<Type> parse_type(bool is_nested);
+            std::unique_ptr<Node> parse_mnemonic();
             std::unique_ptr<Node> parse_nud();
             std::unique_ptr<Node> parse_infix(std::unique_ptr<Node> lhs);
             std::unique_ptr<Node> parse_expr(size_t precedence);
@@ -97,14 +98,21 @@ namespace cerne {
              */
             bool expect(TokenTypes type, bool just_check = false);
             bool expect_or(std::vector<TokenTypes> types, bool just_check = false);
+            
+            /**
+             * Utility to skip over to the next indicated token type
+             */
+            void skip_to_next(TokenTypes type) {
+                while(offset < list.size() && peek().type != type) {
+                    offset++;
+                }
+            }
 
             /**
              * Utility to skip over to the next END token
              */
             void skip_to_next_end() {
-                while(offset < list.size() && peek().type != TokenTypes::END) {
-                    offset++;
-                }
+                skip_to_next(TokenTypes::END);
             }
 
             // main walk method to go through the token list and execute the appropriate subparse method depending on the current token

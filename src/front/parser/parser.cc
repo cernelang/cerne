@@ -62,7 +62,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse(cerne::Token& token) {
          * - the start of an assignment expression (x += 5)
          */
         case cerne::TokenTypes::IDENTIFIER:
-
+            
             break;
 
         default:
