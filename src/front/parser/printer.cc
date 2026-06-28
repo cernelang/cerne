@@ -47,36 +47,6 @@ cerne::JSON path_to_json(const cerne::Path* path) {
     return json;
 }
 
-std::string type_path_to_json(const cerne::TypePath& typepath) {
-    std::vector<cerne::JSON> elements_json;
-
-    std::ranges::for_each(typepath, [&](const cerne::TypePathElement& element) {
-        cerne::JSON element_json;
-        element_json.properties["name"] = std::string(element.name);
-        element_json.properties["is_member"] = std::format("{}", element.is_member);
-        elements_json.push_back(element_json);
-    });
-
-    return cerne::JSONBuilder{}.convert_array(elements_json);
-}
-
-cerne::JSON type_to_json(const cerne::Type* type) {
-    cerne::JSON json;
-    json.properties["type_data"] = cerne::TypeDataNames.at(type->data);
-    json.properties["is_const"] = std::format("{}", type->is_const);
-    json.properties["is_pointer"] = std::format("{}", type->is_pointer);
-    json.properties["type_info"] = std::holds_alternative<cerne::Primitive>(type->typeinfo) ? std::format("{}", type->typeinfo.index()) : "1";
-
-    if(type->templated_type) {
-        json.properties["templated_type"] = type_to_json(type->templated_type.get());
-    } else {
-        json.properties["templated_type"] = "null";
-    }
-
-    json.properties["type"] = "Type";
-    return json;
-}
-
 // sub node JSON converters
 
 cerne::JSON cerne::Leaf::to_json() {
