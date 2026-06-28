@@ -1,3 +1,6 @@
+# v0.2.2
+Completely changed type parsing to a more generalized "path" parsing, this will become extremely useful for the IDENTIFIER case in the main loop, that could be variable declaration, executable expression, assignments, ... And so having a subparse method for "paths" is much easier than smaller ones having the same combined logic but slightly different mechanics.
+
 # v0.2.1
 some big changes happened once again, but this time, project-wide
 ## Build System
