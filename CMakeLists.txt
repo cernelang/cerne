@@ -13,17 +13,6 @@ project(cerne LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# set which compiler to use (msvc, clang or g++)
-if(MSVC)
-    set(CMAKE_CXX_COMPILER "cl")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_COMPILER "clang++")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_COMPILER "g++")
-else()
-    message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
-endif()
-
 # source files
 file(GLOB_RECURSE SOURCES "src/*.cc")
 
