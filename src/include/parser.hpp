@@ -54,7 +54,6 @@ namespace cerne {
             std::unique_ptr<Parameter> parse_parameter();
             std::unique_ptr<Scope> parse_scope();
             std::unique_ptr<Path> parse_path(bool strict = false);
-            std::unique_ptr<Type> parse_type(bool is_nested);
             std::unique_ptr<Node> parse_mnemonic();
             std::unique_ptr<Node> parse_nud();
             std::unique_ptr<Node> parse_infix(std::unique_ptr<Node> lhs);

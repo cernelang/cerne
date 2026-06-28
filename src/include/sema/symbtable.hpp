@@ -39,13 +39,13 @@ namespace cerne {
 
     struct VariableEntry {
         Entry base_data;
-        Type* type;
+        std::unique_ptr<Path> type;
         bool is_mutable;
     };
 
     struct FunctionEntry {
         Entry base_data;
-        Type* return_type;
+        std::unique_ptr<Path> return_type;
         std::vector<std::unique_ptr<Parameter>> parameters;
         std::vector<std::unique_ptr<FunctionEntry>> overloads = {};
     };

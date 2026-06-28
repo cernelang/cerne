@@ -16,6 +16,7 @@
 
 namespace cerne {
     
+    // these might still be needed for future use
     enum class Primitive {
         // Defaults
         Void, Auto, Any,
@@ -61,51 +62,33 @@ namespace cerne {
         {"Map", Primitive::Map},
         {"Signal", Primitive::Signal}
     };
-    
-    enum class TypeData {
-        PRIMITIVE,
-        COMPOUND,
-        COMPLEX,
-        UNKNOWN
-    };
-
-    const std::map<TypeData, std::string> TypeDataNames = {
-        {TypeData::PRIMITIVE, "Primitive"},
-        {TypeData::COMPOUND, "Compound"},
-        {TypeData::COMPLEX, "Complex"},
-        {TypeData::UNKNOWN, "Unknown"},
-    };
 
     /* 
-        A type path is used to break down complex types such as 
+        A path is used to break down chains of identifiers that could be types or regular executable expressions, an example might be: 
         my_space::my_member_object.specific_struct
-        and converts into something like 
-        {"my_space" (is_member=false),"my_member_object" (is_member=true),"specific_struct" (is_member=false)}
+        which is then converted into something like 
+        basic_path={ {name="my_space", is_member=false, modifiers = {} }, {name="my_member_object", is_member=true, modifiers = {}}, {name="specific_struct", is_member=false, modifiers = {}} }
+        "modifiers" are used for things such as calls, initializers, subscripts or generic arguments
+        as order matters, you can NOT treat these as independent objects but rather one single "modifier", and since one identifier can have multiple of those
+        such as: my_function<int>()[20]
+        every element must have a LIST of these modifiers (with their order preserved)
     */
 
-    struct TypePathElement {
-        std::string name;
-        // not member? it's probably a property access then
-        bool is_member;
-    };
-    
-    using TypePath = std::vector<TypePathElement>;
-
-    struct Type {
-        TypeData data;
-
-        // by default, a type is NOT const
-        bool is_const = false;
-        bool is_pointer = false;
-        
-        // variants are better than unions
-        std::variant<Primitive, TypePath> typeinfo;
-        
-        // by default, types are also not templates (obviously)
-        // they can tho, which is why it's an "optional" field
-        std::unique_ptr<Type> templated_type = nullptr;
+    enum class ModifierTypes {
+        CALL,
+        INITIALIZER,
+        GENERIC,
+        SUBSCRIPT
     };
 
+    inline const std::map<ModifierTypes, std::string> ModifierTypesNames = {
+        {ModifierTypes::CALL, "Call"},
+        {ModifierTypes::INITIALIZER, "Initializer"},
+        {ModifierTypes::GENERIC, "Generic"},
+        {ModifierTypes::SUBSCRIPT, "Subscript"}
+    };
+
+    // define call data, initializer data, and subscript data
     struct CallData {
         std::vector<std::unique_ptr<Node>> parameters;
     };
@@ -120,22 +103,28 @@ namespace cerne {
 
     struct InitializerData {
         bool is_keyed; // {.prop=value} or {value}
-        std::vector<InitializerElement> values;
+        std::vector<std::unique_ptr<InitializerElement>> values;
+    };
+
+    struct SubscriptData {
+        std::unique_ptr<Node> index;
     };
 
     // forward define path
     struct Path;
 
+    // calls, initializers and generic arguments are considered all-in-one "modifiers", since order matters and you can't treat them independently (to not lose information)
+    struct Modifier {
+        ModifierTypes type;
+        std::variant<std::unique_ptr<CallData>, std::unique_ptr<InitializerData>, std::unique_ptr<SubscriptData>, std::vector<std::unique_ptr<Path>>> data;
+    };
+
     struct BasicPathElement {
         std::string name;
         bool is_member;
 
-        // calls/class initializers can be part of the path
-        std::unique_ptr<CallData> call = nullptr;
-        std::unique_ptr<InitializerData> initializer = nullptr;
-        
-        // generics can also be part of the path, so for example my_function<int, str>()
-        std::vector<std::unique_ptr<Path>> generic_args = {};
+        // you can have multiple modifiers (syntax-wise) in a single path element, however, since order is necessary to be preserved, you must treat modifiers as one single type and then have a variant for the data itself to differentiate
+        std::vector<std::unique_ptr<Modifier>> modifiers;
     };
 
     using BasicPath = std::vector<BasicPathElement>;
@@ -147,10 +136,15 @@ namespace cerne {
         bool pure_path;
     };
 
+    /**
+     * Utility to create a very simple type
+     */
+    std::unique_ptr<Path> create_simple_type(const std::string& name);
+
     struct Symbol {
         std::string name;
         size_t scope;
-        Type type;
+        std::unique_ptr<Path> type;
     };
 
     // ID [u64] : Symbol

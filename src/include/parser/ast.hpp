@@ -80,7 +80,7 @@ namespace cerne {
         std::string name;
 
         // type of the parameter(s)
-        std::unique_ptr<Type> ptype;
+        std::unique_ptr<Path> ptype;
 
         // constructor for the parameter node
         explicit Parameter(
@@ -121,7 +121,7 @@ namespace cerne {
         std::unique_ptr<Scope> body;
         
         // void
-        std::unique_ptr<Type> return_type;
+        std::unique_ptr<Path> return_type;
 
         // identifier
         std::string name;
@@ -131,7 +131,7 @@ namespace cerne {
             const Span& span,
             std::vector<std::unique_ptr<Parameter>> parameters, 
             std::unique_ptr<Scope> body, 
-            std::unique_ptr<Type> return_type, 
+            std::unique_ptr<Path> return_type, 
             const std::string& name = ""
         ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name) {};
         
@@ -143,7 +143,7 @@ namespace cerne {
         std::string name;
         bool is_const;
         bool uninitialized;
-        std::unique_ptr<Type> var_type;
+        std::unique_ptr<Path> var_type;
         std::unique_ptr<Node> value;
 
         explicit VarDecl(
@@ -151,7 +151,7 @@ namespace cerne {
             const std::string& name = "",
             bool is_const = false,
             bool uninitialized = false,
-            std::unique_ptr<Type> var_type = nullptr,
+            std::unique_ptr<Path> var_type = nullptr,
             std::unique_ptr<Node> value = nullptr
         ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
 

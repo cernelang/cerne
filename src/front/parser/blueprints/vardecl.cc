@@ -32,7 +32,10 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
     }
 
     machine->advance();
-    
+
+    // create a path for the auto type
+    auto auto_type = cerne::create_simple_type("auto");
+
     // (if there are no equals or type declarations right away, it's an unitialized "auto" variable)
     if(machine->offset >= list.size() || list[machine->offset].type == TokenTypes::END) {
         return std::make_unique<VarDecl>(
@@ -40,32 +43,22 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
             var_name,
             is_const,
             true, // is uninitialized
-            std::make_unique<Type>(Type{
-                .data=TypeData::PRIMITIVE,
-                .is_const=is_const,
-                .is_pointer=false,
-                .typeinfo=Primitive::Auto
-            }),
+            std::move(auto_type),
             nullptr // no value since no initialization occured
         );
     }
 
     // now check for any explicit type declaration
     const auto& def = list[machine->offset];
-    std::unique_ptr<Type> vartype = nullptr;
+    std::unique_ptr<Path> vartype = nullptr;
 
     if(def.type != TokenTypes::DEFINE) {
-        vartype=std::make_unique<Type>(Type{
-            .data=TypeData::PRIMITIVE,
-            .is_const=is_const,
-            .is_pointer=false,
-            .typeinfo=Primitive::Auto
-        });
+        vartype=std::move(auto_type);
     } else {
         machine->offset++;
         
         // after parse_type, offset will already be at the next token after type declaration, so no need to increment again
-        vartype=machine->parse_type(false);
+        vartype=machine->parse_path(true);
     }
 
     // check for an equal sign

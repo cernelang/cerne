@@ -13,6 +13,40 @@
 
 // quick helpers
 
+cerne::JSON path_element_to_json(const cerne::BasicPathElement& element) {
+    cerne::JSON json;
+    
+    // element's name and is_member
+    json.properties["name"] = std::string(element.name);
+    json.properties["is_member"] = std::format("{}", element.is_member);
+
+    // go over all the modifiers (with for_each) and convert them to JSON
+    std::vector<cerne::JSON> modifiers_json;
+    std::ranges::for_each(element.modifiers, [&](const std::unique_ptr<cerne::Modifier>& modifier) {
+        cerne::JSON modifier_json;
+        modifier_json.properties["type"] = cerne::ModifierTypesNames.at(modifier->type);
+        modifiers_json.push_back(modifier_json);
+    });
+
+    json.properties["modifiers"] = cerne::JSONBuilder{}.convert_array(modifiers_json);
+    return json;
+}
+
+cerne::JSON path_to_json(const cerne::Path* path) {
+    cerne::JSON json;
+    std::vector<cerne::JSON> elements_json;
+
+    // using for_each to iterate through each element in the path itself and then convert it to a JSON array
+    std::ranges::for_each(path->basic_path, [&](const cerne::BasicPathElement& element) {
+        elements_json.push_back(path_element_to_json(element));
+    });
+
+    // construct path itself's JSON representation
+    json.properties["pure_path"] = std::format("{}", path->pure_path);
+    json.properties["elements"] = cerne::JSONBuilder{}.convert_array(elements_json);
+    return json;
+}
+
 std::string type_path_to_json(const cerne::TypePath& typepath) {
     std::vector<cerne::JSON> elements_json;
 
@@ -73,7 +107,7 @@ cerne::JSON cerne::Parameter::to_json() {
     cerne::JSON json;
     json.properties["unpack"] = std::format("{}", unpack);
     json.properties["symbol_name"] = name;
-    json.properties["parameter_type"] = type_to_json(ptype.get());
+    json.properties["parameter_type"] = path_to_json(ptype.get());
     json.properties["type"] = "Parameter";
     return json;
 }
@@ -85,7 +119,7 @@ cerne::JSON cerne::Scope::to_json() {
         const auto& node = body[i];
         nodes_json.push_back(node->to_json());
     }
-    json.properties["nodes"] = JSONBuilder{}.convert_array(nodes_json);
+    json.properties["nodes"] = cerne::JSONBuilder{}.convert_array(nodes_json);
     json.properties["type"] = "Scope";
     return json;
 }
@@ -100,7 +134,7 @@ cerne::JSON cerne::FunNode::to_json() {
 
     json.properties["parameters"] = JSONBuilder{}.convert_array(params_json);
     json.properties["scope"] = body->to_json();
-    json.properties["return_type"] = type_to_json(return_type.get());
+    json.properties["return_type"] = path_to_json(return_type.get());
     json.properties["name"] = name;
     json.properties["type"] = "FunNode";
     return json;
@@ -111,7 +145,7 @@ cerne::JSON cerne::VarDecl::to_json() {
     json.properties["name"] = name;
     json.properties["is_const"] = std::format("{}", is_const);
     json.properties["uninitialized"] = std::format("{}", uninitialized);
-    json.properties["var_type"] = type_to_json(var_type.get());
+    json.properties["var_type"] = path_to_json(var_type.get());
     json.properties["value"] = value ? JSONBuilder{value->to_json()}.build() : "null";
     json.properties["type"] = "VarDecl";
     return json;

@@ -22,7 +22,7 @@ const std::map<std::string, std::function<std::unique_ptr<cerne::Node>(const cer
 /**
  * Execute mnemonic blueprint
  */
-std::unique_ptr<cerne::Node>  cerne::ParseMachine::parse_mnemonic() {
+std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_mnemonic() {
     const auto& token = list[offset];
     std::string token_name = std::string(token.value.get()->c_str());
     if(blueprints.contains(token_name)) {

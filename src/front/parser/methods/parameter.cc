@@ -49,10 +49,7 @@ std::unique_ptr<cerne::Parameter> define_parameter(bool isunpack, const cerne::T
     );
 
     // change the parameter type to "any" by default
-    param->ptype = std::make_unique<cerne::Type>(cerne::Type{
-        .data = cerne::TypeData::PRIMITIVE,
-        .typeinfo = cerne::Primitive::Any
-    });
+    param->ptype = cerne::create_simple_type("any");
 
     return param;
 }
@@ -71,9 +68,9 @@ void update_parameter(cerne::ParseMachine* machine, cerne::Parameter* param) {
 
     if(!machine->expect(IDENTIFIER)) return;
 
-    auto type = machine->parse_type(false);
-    if(type->data != cerne::TypeData::UNKNOWN) {
-        param->ptype=std::move(type);
+    auto type = machine->parse_path(true);
+    if(type->pure_path && type->basic_path.size() > 0) {
+        param->ptype = std::move(type);
     }
 }
 
