@@ -21,6 +21,7 @@ namespace cerne {
     /**
      * Leafs are used for expressions
      * they hold the value of a literal such as a number or a string
+     * (span, unique_ptr<std::string> value, bool is_number)
      */
     struct Leaf : Node {
         std::unique_ptr<std::string> value;
@@ -28,7 +29,8 @@ namespace cerne {
 
         explicit Leaf(
             Span s, 
-            std::unique_ptr<std::string> v, bool is_num = false
+            std::unique_ptr<std::string> v, 
+            bool is_num = false
         ) : Node(NodeType::Leaf, s), value(std::move(v)), is_number(is_num) {};
 
         JSON to_json() override;
@@ -37,6 +39,7 @@ namespace cerne {
     /**
      * LiteralExpr are also used for expressions
      * despire the name, they simply store the specific identifiers
+     * (span, unique_ptr<Path> value)
      */
     struct LiteralExpr : Node {
         std::unique_ptr<Path> value;
@@ -50,7 +53,7 @@ namespace cerne {
     };
 
     /**
-     * a + b
+     * a <operator> b
      */
     struct BinaryExpr : Node {
         // left hand-side node & right hand-side

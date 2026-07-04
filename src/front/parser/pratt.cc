@@ -45,6 +45,7 @@
 
         // pipelines are more prioritized than comparisons, but still less than bitwise
         case TokenTypes::PIPELINE:
+        case TokenTypes::RANGE:
             return 5;
 
         // comparisons
@@ -75,6 +76,7 @@
 }
 
 std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
+    // initialize token with the token at the current offset on the list
     auto& token = list[offset];
     auto type = token.type;
 
@@ -112,6 +114,11 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
         }
 
         default:
+            // unary
+            if(std::find(unary.begin(), unary.end(), type) != unary.end()) {
+                offset++;
+                
+            }
             break;
     }
 
@@ -143,7 +150,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
 /**
  * Uses pratt parsing to parse expressions
  */
-std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence) {
+std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs) {
     // first token we parse, we check if the current token is a prefix or primary token (allowed to start an expression), if not, we generate an error and return
     const auto& token = list[offset];
 
@@ -153,7 +160,8 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence) 
         token.type != TokenTypes::STRING && 
         token.type != TokenTypes::FSTRING && 
         token.type != TokenTypes::SSTRING &&
-        std::find(unary.begin(), unary.end(), token.type) == unary.end()
+        std::find(unary.begin(), unary.end(), token.type) == unary.end() &&
+        lhs == nullptr
     ) {
         // generate an error and return
         cerror(
@@ -167,9 +175,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence) 
     }
 
     // now we call parse_nud() to parse the left side of the expression
-    auto left = parse_nud();
-
-    if(left == nullptr) return nullptr;
+    auto left = (lhs) ? std::move(lhs) : parse_nud();
 
     while(offset < list.size() && get_score(list[offset].type) > precedence) {
         left = parse_infix(std::move(left));

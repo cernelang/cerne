@@ -26,44 +26,48 @@ void check_ast_print(const cerne::args& args, const cerne::AST* ast, bool error 
     }
 }
 
+void compile(const cerne::args& args, const std::string& file) {
+    // first, we read the file's content
+    const char* file_cstr = file.c_str();
+    const auto& code = cerne::readf(file);
+    const auto& code_sv = std::string_view(code);
+    
+    // now we pass it through the lexer
+    auto tokens = cerne::lexer(code_sv, file_cstr, args);
+    if(tokens.size() == 0) return;
+    if(args.flags.contains("debug")) {
+        cerne::debug(std::format("Tokens -> {}", tokens.size()));
+    }
+
+    // after lexing, we pass the token list through the parser to generate an AST
+    auto ast = cerne::parse(code_sv, tokens, file_cstr, args);
+
+    // after parsing, we pass the AST through SEMA and then to IR generation, for now though, since those haven't been developed yet, the if statement will be blank
+    if(ast->errors > 0) {
+        check_ast_print(args, ast.get(), true);
+        cerne::error(file_cstr, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
+        return;
+    }
+    
+    // add amount of nodes to debug information
+    if(args.flags.contains("debug")) {
+        cerne::debug(std::format("Nodes -> {}", ast->root->node_list.size()));
+    }
+
+    // ast diagnostics
+    check_ast_print(args, ast.get());
+
+    // begin SEMA now
+    auto symbtable = std::make_unique<cerne::SymbolTable>(std::move(ast));
+    symbtable->build();
+}
+
 /**
  * Compilation pipeline
  */
 void compile_files(const cerne::args& args, const std::vector<std::string>& files) {
     std::ranges::for_each(files, [&args](const std::string& file) {
-        // first, we read the file's content
-        const char* file_cstr = file.c_str();
-        const auto& code = cerne::readf(file);
-        const auto& code_sv = std::string_view(code);
-        
-        // now we pass it through the lexer
-        auto tokens = cerne::lexer(code_sv, file_cstr, args);
-        if(tokens.size() == 0) return;
-        if(args.flags.contains("debug")) {
-            cerne::debug(std::format("Tokens -> {}", tokens.size()));
-        }
-
-        // after lexing, we pass the token list through the parser to generate an AST
-        auto ast = cerne::parse(code_sv, tokens, file_cstr, args);
-
-        // after parsing, we pass the AST through SEMA and then to IR generation, for now though, since those haven't been developed yet, the if statement will be blank
-        if(ast->errors > 0) {
-            check_ast_print(args, ast.get(), true);
-            cerne::error(file_cstr, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
-            return;
-        }
-        
-        // add amount of nodes to debug information
-        if(args.flags.contains("debug")) {
-            cerne::debug(std::format("Nodes -> {}", ast->root->node_list.size()));
-        }
-
-        // ast diagnostics
-        check_ast_print(args, ast.get());
-
-        // begin SEMA now
-        auto symbtable = std::make_unique<cerne::SymbolTable>(std::move(ast));
-        symbtable->build();
+        compile(args, file);
     });
 }
 

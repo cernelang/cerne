@@ -57,7 +57,7 @@ namespace cerne {
             std::unique_ptr<Node> parse_mnemonic();
             std::unique_ptr<Node> parse_nud();
             std::unique_ptr<Node> parse_infix(std::unique_ptr<Node> lhs);
-            std::unique_ptr<Node> parse_expr(size_t precedence);
+            std::unique_ptr<Node> parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs = nullptr);
             std::unique_ptr<Node> parse(Token& token);
 
             // helpers

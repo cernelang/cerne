@@ -54,48 +54,40 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
     // peek next token
     auto& next_token = machine->peek(1);
 
-    switch(next_token.type) {
-        // variable declaration
-        case cerne::TokenTypes::IDENTIFIER: {
-            auto& equals = machine->peek(2);
+    // variable declaration
+    if(next_token.type == cerne::TokenTypes::IDENTIFIER) {
+        auto& equals = machine->peek(2);
 
-            if(equals.type != cerne::TokenTypes::EQU) {
-                cerne::cerror(
-                    machine->file_path, 
-                    ERR_UNEXPECTED_TOKEN,
-                    std::format("Unexpected token `{}` at {}:{}", *(equals.value), equals.span.line, equals.span.col), 
-                    cerne::code_snippet(machine->code_sv, equals.span, std::format("`{}` is not a valid token here.", *(equals.value))),    
-                    equals.span
-                );
-                machine->errors++;
-                return nullptr;
-            }
-
-            machine->advance(3); // advance past the identifier, the variable name, and the equals sign
-
-            // now the value should be an expression, so we parse it
-            auto value = machine->parse_expr(0);
-
-            return std::make_unique<cerne::VarDecl>(
-                path->span, 
-                *(next_token.value), 
-                false, 
-                false, 
-                std::move(path), 
-                std::move(value)
+        if(equals.type != cerne::TokenTypes::EQU) {
+            cerne::cerror(
+                machine->file_path, 
+                ERR_UNEXPECTED_TOKEN,
+                std::format("Unexpected token `{}` at {}:{}", *(equals.value), equals.span.line, equals.span.col), 
+                cerne::code_snippet(machine->code_sv, equals.span, std::format("`{}` is not a valid token here.", *(equals.value))),    
+                equals.span
             );
+            machine->errors++;
+            return nullptr;
         }
 
-        // an execution expression usually ends with ; or \n
-        case cerne::TokenTypes::END: {
-            
-        }
+        machine->advance(3); // advance past the identifier, the variable name, and the equals sign
 
-        // default to expression (parse_expr)
-        default:
-            break;
+        // now the value should be an expression, so we parse it
+        auto value = machine->parse_expr(0);
+
+        return std::make_unique<cerne::VarDecl>(
+            path->span, 
+            *(next_token.value), 
+            false, 
+            false, 
+            std::move(path), 
+            std::move(value)
+        );
+    } else {
+        // default to parse_expr (we need to make first literalexpr to be the nud of the expression)
+        return machine->parse_expr(0, std::make_unique<cerne::LiteralExpr>(path->span, std::move(path)));
     }
-
+    
     return nullptr;
 }
 

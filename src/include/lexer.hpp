@@ -60,9 +60,9 @@ namespace cerne {
         DEFINE,         // :
 
         // conjectures
-        ARROW,
+        ARROW,              // ->
+        LAMBDA_ARROW,       // =>
         POWER,
-        UNPACK,             // <>
         RANGE,              // ..
         MEMBER_ACCESS,      // ::
         START_RULE,         // #!rule
@@ -91,6 +91,7 @@ namespace cerne {
         // compounds (soon)
         LEFT_SHIFT_EQU,     // <<=
         RIGHT_SHIFT_EQU,    // >>=
+        UNPACK,             // ...
 
         // reserved
         _EOF
@@ -175,7 +176,7 @@ namespace cerne {
     const std::vector<TokenTypes> unary = {
         TokenTypes::MINUS,      // unary minus
         TokenTypes::BIT_NOT,    // negation
-        TokenTypes::MUL,        // pointers
+        TokenTypes::MUL,        // de-reference
         TokenTypes::BIT_AND     // reference
     };
 
@@ -183,7 +184,18 @@ namespace cerne {
      * Right associative operators (for pratt parsing)
      */
     const std::vector<TokenTypes> right_associative = {
-        TokenTypes::POWER
+        TokenTypes::POWER,
+        TokenTypes::EQU,
+        TokenTypes::PLUS_EQU,
+        TokenTypes::MINUS_EQU,
+        TokenTypes::DIV_EQU,
+        TokenTypes::MUL_EQU,
+        TokenTypes::BIT_AND_EQU,
+        TokenTypes::BIT_OR_EQU,
+        TokenTypes::BIT_XOR_EQU,
+        TokenTypes::BIT_NOT_EQU,
+        TokenTypes::LEFT_SHIFT_EQU,
+        TokenTypes::RIGHT_SHIFT_EQU
     };
 
     struct Token {

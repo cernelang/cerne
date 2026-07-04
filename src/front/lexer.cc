@@ -45,8 +45,8 @@ const std::map<char, cerne::TokenTypes> symbols = {
 
 const std::map<std::string, cerne::TokenTypes, std::less<>> conjectures = {
     {"->", cerne::TokenTypes::ARROW},
+    {"=>", cerne::TokenTypes::LAMBDA_ARROW},
     {"**", cerne::TokenTypes::POWER},
-    {"<>", cerne::TokenTypes::UNPACK},
     {"..", cerne::TokenTypes::RANGE},
     {"::", cerne::TokenTypes::MEMBER_ACCESS},
     {"#!", cerne::TokenTypes::START_RULE },
@@ -73,10 +73,10 @@ const std::map<std::string, cerne::TokenTypes, std::less<>> conjectures = {
     {"&&", cerne::TokenTypes::AND}
 };
 
-// will soon actually implement these properly
 const std::map<std::string, cerne::TokenTypes, std::less<>> compounds = {
     {"<<=", cerne::TokenTypes::LEFT_SHIFT_EQU},
-    {">>=", cerne::TokenTypes::RIGHT_SHIFT_EQU}
+    {">>=", cerne::TokenTypes::RIGHT_SHIFT_EQU},
+    {"...", cerne::TokenTypes::UNPACK}
 };
 
 /* --- SIMPLE LEXER MACHINE --- */
@@ -90,6 +90,7 @@ class LexerMachine {
         bool is_comment = false;
         bool is_mlc = false;
         bool is_string = false;
+        bool number_began_in_dot = false;
         std::string raw_str_content = "";
         const std::string_view& code;
         const char* file_path;
@@ -194,11 +195,14 @@ class LexerMachine {
 
         void number(char c) {
             // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
-            std::string number = "";
+            std::string number = (number_began_in_dot) ? "0" : ""; // we put a 0 so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
             size_t len = 1;
             bool error = false;
             size_t error_at = 0;
             uint8_t dots = 0;
+
+            // reset to false
+            number_began_in_dot = false;
 
             while((isdigit(c) || c == ',' || c == '.') && offset < code.size()) {
                 // if there already is a dot, we're probably dealing with a range, so break loop
@@ -270,6 +274,52 @@ class LexerMachine {
             push(std::move(token));
         }
 
+        void compound(const std::string& possible_compound) {
+            // update to over after the last character of the compound
+            offset += 2;
+            
+            // get compound type
+            auto compound_type = compounds.at(possible_compound);
+
+            // check if the compound type is unpack and after unpack is a number, since it would mean it's a number range number (.5 is a number, 0...5 is a range between 0 and 0.5)
+            if(!(compound_type == cerne::TokenTypes::UNPACK && (offset+1 < code.length()) && isdigit(code[offset + 1]))) {
+
+                auto token = cerne::Token(
+                    compound_type,
+                    std::make_unique<std::string>(possible_compound),
+                    cerne::Span{
+                        .line=line,
+                        .col=col-2,
+                        .offset=offset-2,
+                        .length=3
+                    }
+                );
+                
+                // push compound and skip over the third character as well
+                push(std::move(token));
+                return;
+                
+            }
+
+            // if the condition above is not met, it's definitely a number range number situation
+            auto range = cerne::Token(
+                cerne::TokenTypes::RANGE,
+                std::make_unique<std::string>(possible_compound),
+                cerne::Span{
+                    .line=line,
+                    .col=col-1,
+                    .offset=offset-1,
+                    .length=2
+                }
+            );
+
+            // set number_began_in_dot to true and reset offset back so number parses the first dot correctly
+            offset--;
+            number_began_in_dot = true;
+            push(std::move(range));
+            return;
+        }
+
         void conjecture(const std::string& possible_conjecture) {
             // already update the offset to skip the next character since the next character is part of the conjecture
             offset++;
@@ -303,7 +353,7 @@ class LexerMachine {
             }
         }
 
-        void symbol(char c) {
+        void symbol(char c, char n) {
             auto symbol_type = symbols.at(c);
 
             switch(symbol_type) {
@@ -314,6 +364,26 @@ class LexerMachine {
                     is_string = true;
                     string_subtype = symbol_type;
                     break;
+
+                case cerne::TokenTypes::DOT:
+                    // if next is a number, it's a literal like .5
+                    if(isdigit(n)) {
+                        number_began_in_dot = true;
+                    } else {
+                        auto dot = cerne::Token(
+                            symbol_type,
+                            std::make_unique<std::string>(std::string{c}),
+                            cerne::Span{
+                                .line=line,
+                                .col=col-1,
+                                .offset=offset,
+                                .length=1
+                            }
+                        );
+                        push(std::move(dot));
+                    }
+
+                    break;  // we just break and let number handle it naturally, since the dot is part of the number
 
                 default:
                     // for any other symbol, just push to the token list
@@ -360,14 +430,23 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
         } 
         // none of those? it's a symbol/whitespace
         else {
-            std::string possible_conjecture{c,n};
+            // nn only here for performance
+            char nn = 0;
+            if(machine->offset + 2 < code.size()) nn = code[machine->offset+2];
 
-            // check for symbols vs conjecture (conjecture is more prioritized than single symbol)
-            if(conjectures.contains(possible_conjecture)) {
+            // conjectures - 2 letter operations, compounds - 3 letter operations while symbols are only 1 character long
+            std::string possible_conjecture{c,n};
+            std::string possible_compound{c,n,nn};
+
+            // check for symbols vs conjecture vs compounds (priority -> compounds > conjectures > symbols)
+            if(compounds.contains(possible_compound)) {
+                machine->compound(possible_compound);
+                continue;
+            } else if(conjectures.contains(possible_conjecture)) {
                 machine->conjecture(possible_conjecture);
                 continue;
             } else if(symbols.contains(c)) {
-                machine->symbol(c);
+                machine->symbol(c, n);
                 continue;
             } 
             // unexpected character (should ignore whitespaces)
