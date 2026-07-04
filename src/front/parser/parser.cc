@@ -87,8 +87,6 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
         // default to parse_expr (we need to make first literalexpr to be the nud of the expression)
         return machine->parse_expr(0, std::make_unique<cerne::LiteralExpr>(path->span, std::move(path)));
     }
-    
-    return nullptr;
 }
 
 
