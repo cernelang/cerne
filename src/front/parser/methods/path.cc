@@ -294,7 +294,7 @@ std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine*
 /**
  * Utility to make creating simple types much faster
  */
-std::unique_ptr<cerne::Path> cerne::create_simple_type(const std::string& name) {
+std::unique_ptr<cerne::Path> cerne::create_simple_type(const std::string& name, const Span& span) {
     // type name in basicpathelement
     cerne::BasicPath path_elements;
     path_elements.reserve(1);
@@ -308,6 +308,7 @@ std::unique_ptr<cerne::Path> cerne::create_simple_type(const std::string& name) 
     // create the path
     return std::make_unique<cerne::Path>(cerne::Path{
         .basic_path=std::move(path_elements),
+        .span=span,
         .pure_path=false
     });
 }
@@ -321,6 +322,8 @@ std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type) {
     auto path = std::make_unique<cerne::Path>();
 
     bool pure = true;
+
+    auto& first_token = peek();
 
     // we parse path element until a path chain stopper is encountered (a token that cannot connect paths, aka a token that is not a member access or a dot)
     while(offset < list.size()) {
@@ -354,6 +357,13 @@ std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type) {
         errors++;
         return nullptr;
     }
+
+    path->span = Span{
+        .line=first_token.span.line,
+        .col=first_token.span.col,
+        .offset=first_token.span.offset,
+        .length=peek().span.offset - first_token.span.offset + peek().span.length
+    };
 
     // at last, after we go through the whole path, we determine whether it's pure or not from the variable
     path->pure_path = pure;

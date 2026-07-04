@@ -73,10 +73,24 @@ namespace cerne {
         GREATER_EQUAL,      // >=
         LESS_EQUAL,         // <=
         EQUAL,              // ==
+        INCREMENT,          // ++
+        DECREMENT,          // --
+        PLUS_EQU,           // +=
+        MINUS_EQU,          // -=
+        DIV_EQU,            // /=
+        MUL_EQU,            // *=
+        BIT_AND_EQU,        // &=
+        BIT_OR_EQU,         // |=
+        BIT_XOR_EQU,        // ^=
+        BIT_NOT_EQU,        // ~=
         NOT_EQUAL,          // !=
         PIPELINE,           // |>
         OR,                 // ||
         AND,                // &&
+
+        // compounds (soon)
+        LEFT_SHIFT_EQU,     // <<=
+        RIGHT_SHIFT_EQU,    // >>=
 
         // reserved
         _EOF
@@ -134,10 +148,23 @@ namespace cerne {
         { TokenTypes::GREATER_EQUAL, "GreaterEqual" },
         { TokenTypes::LESS_EQUAL, "LessEqual" },
         { TokenTypes::EQUAL, "Equal" },
+        { TokenTypes::INCREMENT, "Increment" },
+        { TokenTypes::DECREMENT, "Decrement" },
+        { TokenTypes::PLUS_EQU, "PlusEqual" },
+        { TokenTypes::MINUS_EQU, "MinusEqual" },
+        { TokenTypes::DIV_EQU, "DivEqual" },
+        { TokenTypes::MUL_EQU, "MulEqual" },
+        { TokenTypes::BIT_AND_EQU, "BitAndEqual" },
+        { TokenTypes::BIT_OR_EQU, "BitOrEqual" },
+        { TokenTypes::BIT_XOR_EQU, "BitXorEqual" },
+        { TokenTypes::BIT_NOT_EQU, "BitNotEqual" },
         { TokenTypes::NOT_EQUAL, "NotEqual" },
         { TokenTypes::PIPELINE, "Pipeline" },
         { TokenTypes::OR, "Or" },
         { TokenTypes::AND, "And" },
+
+        { TokenTypes::LEFT_SHIFT_EQU, "LeftShiftEqual" },
+        { TokenTypes::RIGHT_SHIFT_EQU, "RightShiftEqual" },
 
         { TokenTypes::_EOF, "EOF" }
     };

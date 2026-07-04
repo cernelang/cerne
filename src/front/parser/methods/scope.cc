@@ -24,6 +24,14 @@ std::unique_ptr<cerne::Scope> cerne::ParseMachine::parse_scope() {
         if(node) scope_node->body.push_back(std::move(node));
         offset++;
     }
+
+    // set scope's length
+    scope_node->span = cerne::Span {
+        start_token.span.line,
+        start_token.span.col,
+        start_token.span.offset,
+        list[offset].span.offset - start_token.span.offset + list[offset].span.length
+    };
     
     // if file ended without closing scope
     if(list[offset].type != TokenTypes::END_SCOPE && offset >= list.size() && !options.flags.contains("quiet")) {
@@ -39,6 +47,7 @@ std::unique_ptr<cerne::Scope> cerne::ParseMachine::parse_scope() {
             start_token.span
         );
         errors++;
+        return nullptr;
     }
 
     return scope_node;

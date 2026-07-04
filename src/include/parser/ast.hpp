@@ -39,11 +39,11 @@ namespace cerne {
      * despire the name, they simply store the specific identifiers
      */
     struct LiteralExpr : Node {
-        std::unique_ptr<std::string> value;
+        std::unique_ptr<Path> value;
 
         explicit LiteralExpr(
             Span s, 
-            std::unique_ptr<std::string> value
+            std::unique_ptr<Path> value
         ) : Node(NodeType::LiteralExpr, s), value(std::move(value)) {};
 
         JSON to_json() override;

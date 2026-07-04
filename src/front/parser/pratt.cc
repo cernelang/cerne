@@ -17,8 +17,8 @@
 [[nodiscard]] constexpr size_t cerne::get_score(cerne::TokenTypes type) noexcept {
     switch(type) {
         // conjectures & high precedence symbols
-        case TokenTypes::DOT:
-        case TokenTypes::MEMBER_ACCESS:
+        case TokenTypes::INCREMENT:
+        case TokenTypes::DECREMENT:
             return 11;
         case TokenTypes::POWER:
             return 10;
@@ -31,12 +31,42 @@
         case TokenTypes::MINUS:
             return 8;
 
+        // bit shifts
+        case TokenTypes::LEFT_SHIFT:
+        case TokenTypes::RIGHT_SHIFT:
+            return 7;
+
         // bitwise
         case TokenTypes::BIT_AND:
         case TokenTypes::BIT_OR:
         case TokenTypes::BIT_XOR:
         case TokenTypes::BIT_NOT:
-            return 7;
+            return 6;
+
+        // pipelines are more prioritized than comparisons, but still less than bitwise
+        case TokenTypes::PIPELINE:
+            return 5;
+
+        // comparisons
+        case TokenTypes::GREATER_THAN:
+        case TokenTypes::LESS_THAN:
+        case TokenTypes::EQUAL:
+        case TokenTypes::NOT_EQUAL:
+            return 4;
+
+        // assignment operators are always last
+        case TokenTypes::EQU:
+        case TokenTypes::PLUS_EQU:
+        case TokenTypes::MINUS_EQU:
+        case TokenTypes::DIV_EQU:
+        case TokenTypes::MUL_EQU:
+        case TokenTypes::BIT_AND_EQU:
+        case TokenTypes::BIT_OR_EQU:
+        case TokenTypes::BIT_XOR_EQU:
+        case TokenTypes::BIT_NOT_EQU:
+        case TokenTypes::LEFT_SHIFT_EQU:
+        case TokenTypes::RIGHT_SHIFT_EQU:
+            return 1;
 
         // no precedence tokens
         default:
@@ -50,9 +80,11 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
 
     switch (type) {
         // identifiers should call a LiteralExpr
-        case TokenTypes::IDENTIFIER:
+        case TokenTypes::IDENTIFIER: {
+            auto path = parse_path();
             offset++;
-            return std::make_unique<cerne::LiteralExpr>(token.span, std::move(token.value));
+            return std::make_unique<cerne::LiteralExpr>(token.span, std::move(path));
+        }
 
         // for numbers and strings, just create a leaf node
         case TokenTypes::NUMBER:

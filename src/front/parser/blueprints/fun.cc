@@ -77,8 +77,14 @@ std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) 
     }
 
     // create the function node and push it to the AST
+    // scope's offset is at first {, so we substract that with ID's offset to get the signature length, then we add the scope's length to get the full function's length
     auto fun = std::make_unique<cerne::FunNode>(
-        id.span,
+        cerne::Span{
+            id.span.line,
+            id.span.col,
+            id.span.offset,
+            scope->span.offset - id.span.offset + scope->span.length
+        },
         std::move(parameters),
         std::move(scope),
         std::move(fun_type),

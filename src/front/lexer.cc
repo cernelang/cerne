@@ -57,10 +57,26 @@ const std::map<std::string, cerne::TokenTypes> conjectures = {
     {">=", cerne::TokenTypes::GREATER_EQUAL},
     {"<=", cerne::TokenTypes::LESS_EQUAL},
     {"==", cerne::TokenTypes::EQUAL},
+    {"++", cerne::TokenTypes::INCREMENT},
+    {"--", cerne::TokenTypes::DECREMENT},
+    {"+=", cerne::TokenTypes::PLUS_EQU},
+    {"-=", cerne::TokenTypes::MINUS_EQU},
+    {"/=", cerne::TokenTypes::DIV_EQU},
+    {"*=", cerne::TokenTypes::MUL_EQU},
+    {"&=", cerne::TokenTypes::BIT_AND_EQU},
+    {"|=", cerne::TokenTypes::BIT_OR_EQU},
+    {"^=", cerne::TokenTypes::BIT_XOR_EQU},
+    {"~=", cerne::TokenTypes::BIT_NOT_EQU},
     {"!=", cerne::TokenTypes::NOT_EQUAL},
     {"|>", cerne::TokenTypes::PIPELINE},
     {"||", cerne::TokenTypes::OR},
     {"&&", cerne::TokenTypes::AND}
+};
+
+// will soon actually implement these properly
+const std::map<std::string, cerne::TokenTypes> compounds = {
+    {"<<=", cerne::TokenTypes::LEFT_SHIFT_EQU},
+    {">>=", cerne::TokenTypes::RIGHT_SHIFT_EQU}
 };
 
 /* --- SIMPLE LEXER MACHINE --- */

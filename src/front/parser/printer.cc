@@ -59,7 +59,7 @@ cerne::JSON cerne::Leaf::to_json() {
 
 cerne::JSON cerne::LiteralExpr::to_json() {
     cerne::JSON json;
-    json.properties["value"] = value ? *value : "";
+    json.properties["value"] = path_to_json(value.get());
     json.properties["type"] = "LiteralExpr";
     return json;
 }

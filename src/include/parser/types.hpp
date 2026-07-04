@@ -132,6 +132,9 @@ namespace cerne {
     struct Path {
         BasicPath basic_path;
 
+        // keep span information for diagnostics
+        Span span;
+
         // if there are no calls or initializers, this path is considered a type path
         bool pure_path;
     };
@@ -139,7 +142,7 @@ namespace cerne {
     /**
      * Utility to create a very simple type
      */
-    std::unique_ptr<Path> create_simple_type(const std::string& name);
+    std::unique_ptr<Path> create_simple_type(const std::string& name, const Span& span = Span{0, 0, 0, 0});
 
     struct Symbol {
         std::string name;

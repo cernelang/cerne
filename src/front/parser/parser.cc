@@ -44,26 +44,84 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_mnemonic() {
     return nullptr;
 }
 
+
+/**
+ *  separate function for the identifier case
+ */
+std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
+    auto path = machine->parse_path();
+    
+    // peek next token
+    auto& next_token = machine->peek(1);
+
+    switch(next_token.type) {
+        // variable declaration
+        case cerne::TokenTypes::IDENTIFIER: {
+            auto& equals = machine->peek(2);
+
+            if(equals.type != cerne::TokenTypes::EQU) {
+                cerne::cerror(
+                    machine->file_path, 
+                    ERR_UNEXPECTED_TOKEN,
+                    std::format("Unexpected token `{}` at {}:{}", *(equals.value), equals.span.line, equals.span.col), 
+                    cerne::code_snippet(machine->code_sv, equals.span, std::format("`{}` is not a valid token here.", *(equals.value))),    
+                    equals.span
+                );
+                machine->errors++;
+                return nullptr;
+            }
+
+            machine->advance(3); // advance past the identifier, the variable name, and the equals sign
+
+            // now the value should be an expression, so we parse it
+            auto value = machine->parse_expr(0);
+
+            return std::make_unique<cerne::VarDecl>(
+                path->span, 
+                *(next_token.value), 
+                false, 
+                false, 
+                std::move(path), 
+                std::move(value)
+            );
+        }
+
+        // an execution expression usually ends with ; or \n
+        case cerne::TokenTypes::END: {
+            
+        }
+
+        // default to expression (parse_expr)
+        default:
+            break;
+    }
+
+    return nullptr;
+}
+
+
 /**
  * Global parse function, executes appropriate function depending on the current token
  */
 std::unique_ptr<cerne::Node> cerne::ParseMachine::parse(cerne::Token& token) {
     switch(token.type) {
-        case cerne::TokenTypes::MNEMONIC: 
+        case TokenTypes::MNEMONIC: {
             return parse_mnemonic();
+        }
 
-        case cerne::TokenTypes::START_SCOPE:
+        case TokenTypes::START_SCOPE: {
             return parse_scope();
+        }
 
         /**
          * identifier starters can be lots of things, for instance:
          * - the start of a variable declaration (int x = 10)
-         * - the start of a function call (my_function())
+         * - an execution expression (my_function())
          * - the start of an assignment expression (x += 5)
          */
-        case cerne::TokenTypes::IDENTIFIER:
-            
-            break;
+        case TokenTypes::IDENTIFIER: {
+            return identifier_case(this);
+        }
 
         default:
             // how?? 
