@@ -30,27 +30,27 @@ void check_ast_print(const cerne::args& args, const cerne::AST* ast, bool error 
  * Compilation pipeline
  */
 void compile_files(const cerne::args& args, const std::vector<std::string>& files) {
-    for(size_t i = 0; i < files.size(); i++) {
+    std::ranges::for_each(files, [&args](const std::string& file) {
         // first, we read the file's content
-        const char* file = files[i].c_str();
-        const auto& code = cerne::readf(std::string(file));
+        const char* file_cstr = file.c_str();
+        const auto& code = cerne::readf(file);
         const auto& code_sv = std::string_view(code);
         
         // now we pass it through the lexer
-        auto tokens = cerne::lexer(code_sv, file, args);
-        if(tokens.size() == 0) break;
+        auto tokens = cerne::lexer(code_sv, file_cstr, args);
+        if(tokens.size() == 0) return;
         if(args.flags.contains("debug")) {
             cerne::debug(std::format("Tokens -> {}", tokens.size()));
         }
 
         // after lexing, we pass the token list through the parser to generate an AST
-        auto ast = cerne::parse(code_sv, tokens, file, args);
+        auto ast = cerne::parse(code_sv, tokens, file_cstr, args);
 
         // after parsing, we pass the AST through SEMA and then to IR generation, for now though, since those haven't been developed yet, the if statement will be blank
         if(ast->errors > 0) {
             check_ast_print(args, ast.get(), true);
-            cerne::error(file, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
-            break;
+            cerne::error(file_cstr, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
+            return;
         }
         
         // add amount of nodes to debug information
@@ -64,7 +64,7 @@ void compile_files(const cerne::args& args, const std::vector<std::string>& file
         // begin SEMA now
         auto symbtable = std::make_unique<cerne::SymbolTable>(std::move(ast));
         symbtable->build();
-    }
+    });
 }
 
 int main(int argc, char** argv) {

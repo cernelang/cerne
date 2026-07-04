@@ -27,8 +27,8 @@ cerne::flag parse_flag(const std::string_view& arg, const std::string_view& next
     const size_t& pos_equ = arg.find("=");
     if(pos_equ != std::string_view::npos) {
         // get name and value of the flag
-        const std::string_view& name = arg.substr(rem, pos_equ-rem),
-                                value = arg.substr(pos_equ + 1);
+        const std::string_view& name    = arg.substr(rem, pos_equ-rem);
+        const std::string_view& value   = arg.substr(pos_equ + 1);
 
         return cerne::flag(std::string(name), std::string(value));
     } 

@@ -43,7 +43,7 @@ const std::map<char, cerne::TokenTypes> symbols = {
     {'}', cerne::TokenTypes::END_SCOPE}
 };
 
-const std::map<std::string, cerne::TokenTypes> conjectures = {
+const std::map<std::string, cerne::TokenTypes, std::less<>> conjectures = {
     {"->", cerne::TokenTypes::ARROW},
     {"**", cerne::TokenTypes::POWER},
     {"<>", cerne::TokenTypes::UNPACK},
@@ -74,7 +74,7 @@ const std::map<std::string, cerne::TokenTypes> conjectures = {
 };
 
 // will soon actually implement these properly
-const std::map<std::string, cerne::TokenTypes> compounds = {
+const std::map<std::string, cerne::TokenTypes, std::less<>> compounds = {
     {"<<=", cerne::TokenTypes::LEFT_SHIFT_EQU},
     {">>=", cerne::TokenTypes::RIGHT_SHIFT_EQU}
 };
