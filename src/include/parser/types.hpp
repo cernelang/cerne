@@ -91,6 +91,8 @@ namespace cerne {
     // define call data, initializer data, and subscript data
     struct CallData {
         std::vector<std::unique_ptr<Node>> parameters;
+
+        JSON to_json();
     };
 
     struct InitializerElement {
@@ -99,15 +101,21 @@ namespace cerne {
 
         // nodes always have spans so we don't need to worry about value_span
         std::unique_ptr<Node> value;
+        
+        JSON to_json();
     };
 
     struct InitializerData {
         bool is_keyed; // {.prop=value} or {value}
         std::vector<std::unique_ptr<InitializerElement>> values;
+        
+        JSON to_json();
     };
 
     struct SubscriptData {
         std::unique_ptr<Node> index;
+        
+        JSON to_json();
     };
 
     // forward define path

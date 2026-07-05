@@ -13,6 +13,9 @@
 
 // quick helpers
 
+// forward declare path_to_json 
+cerne::JSON path_to_json(const cerne::Path* path);
+
 cerne::JSON path_element_to_json(const cerne::BasicPathElement& element) {
     cerne::JSON json;
     
@@ -25,6 +28,38 @@ cerne::JSON path_element_to_json(const cerne::BasicPathElement& element) {
     std::ranges::for_each(element.modifiers, [&](const std::unique_ptr<cerne::Modifier>& modifier) {
         cerne::JSON modifier_json;
         modifier_json.properties["type"] = cerne::ModifierTypesNames.at(modifier->type);
+
+        // now, since modifier data is a variant, we need to use std::visit to get the actual data and convert it to JSON
+        std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+
+            // for call data
+            if constexpr (std::is_same_v<T, std::unique_ptr<cerne::CallData>>) {
+                modifier_json.properties["data"] = cerne::JSONBuilder{arg->to_json()}.json;
+            }
+            
+            // initializer
+            else if constexpr (std::is_same_v<T, std::unique_ptr<cerne::InitializerData>>) {
+                modifier_json.properties["data"] = cerne::JSONBuilder{arg->to_json()}.json;
+            }
+            
+            // subscript
+            else if constexpr (std::is_same_v<T, std::unique_ptr<cerne::SubscriptData>>) {
+                modifier_json.properties["data"] = cerne::JSONBuilder{arg->to_json()}.json;
+            }
+
+            // generic (vector of paths)
+            else if constexpr (std::is_same_v<T, std::vector<std::unique_ptr<cerne::Path>>>) {
+                std::vector<cerne::JSON> paths_json;
+
+                std::ranges::for_each(arg, [&](const std::unique_ptr<cerne::Path>& path) {
+                    paths_json.push_back(path_to_json(path.get()));
+                });
+
+                modifier_json.properties["data"] = cerne::JSONBuilder{}.convert_array(paths_json);
+            }
+        }, modifier->data);
+
         modifiers_json.push_back(modifier_json);
     });
 
@@ -170,3 +205,43 @@ cerne::JSON cerne::ExportNode::to_json() {
 }
 
 /* --- Node print methods End --- */
+
+// path modifiers
+cerne::JSON cerne::CallData::to_json() {
+    cerne::JSON json;
+    std::vector<cerne::JSON> params_json;
+
+    std::ranges::for_each(parameters, [&](const std::unique_ptr<Node>& param) {
+        params_json.push_back(param->to_json());
+    });
+
+    json.properties["parameters"] = JSONBuilder{}.convert_array(params_json);
+    return json;
+}
+
+cerne::JSON cerne::InitializerElement::to_json() {
+    cerne::JSON json;
+    json.properties["key"] = key;
+    json.properties["key_span"] = std::format("line: {}, col: {}, offset: {}, length: {}", key_span.line, key_span.col, key_span.offset, key_span.length);
+    json.properties["value"] = value->to_json();
+    return json;
+}
+
+cerne::JSON cerne::InitializerData::to_json() {
+    cerne::JSON json;
+    std::vector<cerne::JSON> values_json;
+
+    std::ranges::for_each(values, [&](const std::unique_ptr<InitializerElement>& element) {
+        values_json.push_back(element->to_json());
+    });
+
+    json.properties["is_keyed"] = std::format("{}", is_keyed);
+    json.properties["values"] = JSONBuilder{}.convert_array(values_json);
+    return json;
+}
+
+cerne::JSON cerne::SubscriptData::to_json() {
+    cerne::JSON json;
+    json.properties["index"] = index->to_json();
+    return json;
+}

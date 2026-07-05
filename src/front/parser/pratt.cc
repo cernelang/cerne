@@ -119,8 +119,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
     switch (type) {
         // identifiers should call a LiteralExpr
         case TokenTypes::IDENTIFIER: {
-            auto path = parse_path();
-            offset++;
+            auto path = parse_path(); // it already stops at the token after the path, so we don't need to advance here
             return std::make_unique<cerne::LiteralExpr>(token.span, std::move(path));
         }
 
@@ -151,7 +150,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
 
         default:
             // unary
-            if(std::find(unary.begin(), unary.end(), type) != unary.end()) {
+            if(std::ranges::find(unary, type) != unary.end()) {
                 // consume unary
                 offset++;
                 
@@ -195,7 +194,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
     std::unique_ptr<Node> rhs = nullptr;
 
     // for right associative operators
-    if(std::find(right_associative.begin(), right_associative.end(), op) != right_associative.end()) {
+    if(std::ranges::find(right_associative, op) != right_associative.end()) {
         // parse the right-hand side with lower precedence to get tokens of same precedence (like 2**3**4 = (2**(3**4))
         rhs = parse_expr(precedence - 1);
     } else {

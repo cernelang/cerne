@@ -178,11 +178,11 @@ class LexerMachine {
             col--;
             len--;
 
-            // to get the type, we first check if the word is in keywords, then registers, and if it's in neither then it's an IDENTIFIER
-            auto type = 
-                (std::ranges::find(cerne::keywords, word) != cerne::keywords.end()) ? cerne::TokenTypes::MNEMONIC 
-                : (std::ranges::find(cerne::registers, word) != cerne::registers.end()) ? cerne::TokenTypes::REGISTER 
-                : cerne::TokenTypes::IDENTIFIER;
+            // to get the type, we check if the word is a keyword or register and if it is, then we set the type to that
+            auto type = cerne::TokenTypes::IDENTIFIER;
+
+            if(std::ranges::find(cerne::keywords, word) != cerne::keywords.end()) type = cerne::TokenTypes::MNEMONIC;
+            else if(std::ranges::find(cerne::registers, word) != cerne::registers.end()) type = cerne::TokenTypes::REGISTER;
 
             // now push the token to our machine's token list
             auto token = cerne::Token(
@@ -200,7 +200,7 @@ class LexerMachine {
 
         void number(char c) {
             // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
-            std::string number = (number_began_in_dot) ? "0" : ""; // we put a 0 so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
+            std::string number = number_began_in_dot ? "0" : ""; // we put a 0 so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
             size_t len = 1;
             bool error = false;
             size_t error_at = 0;
@@ -283,11 +283,9 @@ class LexerMachine {
             // update to over after the last character of the compound
             offset += 2;
             
-            // get compound type
-            auto compound_type = compounds.at(possible_compound);
-
+            // get compound type and then
             // check if the compound type is unpack and after unpack is a number, since it would mean it's a number range number (.5 is a number, 0...5 is a range between 0 and 0.5)
-            if(!(compound_type == cerne::TokenTypes::UNPACK && (offset+1 < code.length()) && isdigit(code[offset + 1]))) {
+            if(auto compound_type = compounds.at(possible_compound); !(compound_type == cerne::TokenTypes::UNPACK && (offset+1 < code.length()) && isdigit(code[offset + 1]))) {
 
                 auto token = cerne::Token(
                     compound_type,

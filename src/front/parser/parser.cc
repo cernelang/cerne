@@ -52,11 +52,11 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
     auto path = machine->parse_path();
     
     // peek next token
-    auto& next_token = machine->peek(1);
+    auto& next_token = machine->peek();
 
     // variable declaration
     if(next_token.type == cerne::TokenTypes::IDENTIFIER) {
-        auto& equals = machine->peek(2);
+        auto& equals = machine->peek(1);
 
         // if there isn't an equals, it's an uninitialized variable declaration
         if(equals.type != cerne::TokenTypes::EQU) {
@@ -72,7 +72,7 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
 
         // initialized variable declaration
 
-        machine->advance(3); // advance past the identifier, the variable name and the equals sign
+        machine->advance(2); // advance past the variable name and the equals sign
 
         // now the value should be an expression, so we parse it
         auto value = machine->parse_expr(0);
@@ -115,8 +115,16 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse(cerne::Token& token) {
             return identifier_case(this);
         }
 
+        case TokenTypes::STRING:
+        case TokenTypes::FSTRING:
+        case TokenTypes::SSTRING:
+        case TokenTypes::NUMBER: {
+            // parse expressions
+            return parse_expr(0);
+        }
+
         default:
-            // how?? 
+            // not valid
             break;
     }
 

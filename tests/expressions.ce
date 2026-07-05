@@ -1,3 +1,13 @@
 int x = 10 + 20 * 5
 int y = -x++ + 10
 int z = -++x * (y-- + 5) / (20 % 3) == !w && a <= b >> 2;
+
+
+// now this comes other interesting tests
+a.b.c.d.e.f.g
+foo(bar(baz(qux())))
+foo.bar<T>.baz<U>.qux()
+a[0][1][2][3]
+foo(bar)[baz].qux<T>(x + y * z)
+a.b()[c].d{1,2,3}.e<T>().f
+a.b<T>(x + y * foo.bar()[z]).c{1, 2, other(x, y)}[index].d
