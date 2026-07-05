@@ -15,11 +15,16 @@ const std::map<char, cerne::TokenTypes> symbols = {
     {'-', cerne::TokenTypes::MINUS},
     {'/', cerne::TokenTypes::DIV},
     {'*', cerne::TokenTypes::MUL},
+    {'%', cerne::TokenTypes::MODULO},
+
+    {'@', cerne::TokenTypes::ASM_STARTER},
 
     {'&', cerne::TokenTypes::BIT_AND},
     {'|', cerne::TokenTypes::BIT_OR},
     {'^', cerne::TokenTypes::BIT_XOR},
-    {'!', cerne::TokenTypes::BIT_NOT},
+    {'~', cerne::TokenTypes::BIT_NOT},
+    
+    {'!', cerne::TokenTypes::NOT},
 
     {'<', cerne::TokenTypes::LESS_THAN},
     {'>', cerne::TokenTypes::GREATER_THAN},
@@ -175,8 +180,8 @@ class LexerMachine {
 
             // to get the type, we first check if the word is in keywords, then registers, and if it's in neither then it's an IDENTIFIER
             auto type = 
-                (std::find(cerne::keywords.begin(), cerne::keywords.end(), word) != cerne::keywords.end()) ? cerne::TokenTypes::MNEMONIC 
-                : (std::find(cerne::registers.begin(), cerne::registers.end(), word) != cerne::registers.end()) ? cerne::TokenTypes::REGISTER 
+                (std::ranges::find(cerne::keywords, word) != cerne::keywords.end()) ? cerne::TokenTypes::MNEMONIC 
+                : (std::ranges::find(cerne::registers, word) != cerne::registers.end()) ? cerne::TokenTypes::REGISTER 
                 : cerne::TokenTypes::IDENTIFIER;
 
             // now push the token to our machine's token list

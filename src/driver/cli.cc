@@ -63,7 +63,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
             args.flags.insert(_flag);
         } else {
             // if not we check if it's a command and if not we just push it as a file
-            if(std::find(commands.begin(), commands.end(), arg) != commands.end()) {
+            if(std::ranges::find(commands, arg) != commands.end()) {
                 auto _flag = std::pair<std::string, std::string>(arg, "");
                 args.flags.insert(_flag);
                 continue;
@@ -74,7 +74,7 @@ cerne::args cerne::parse_args(int argc, char** argv) {
     }
 
     // no flags or files? then print the help function
-    if(args.flags.size() == 0 && args.files.size() == 0) args.flags.insert({ "help", "" });
+    if(args.flags.empty() && args.files.empty()) args.flags.try_emplace("help", "");
 
     return args;
 }
@@ -94,7 +94,7 @@ void cerne::CLI::event(const std::string& type, cerne::callback fnc) const {
         if constexpr (std::is_invocable_v<fnc_stripped, std::vector<std::string>>) {
             new_fnc(files);
         } else {
-            if(flags.find(type) != flags.end()) new_fnc();
+            if(flags.contains(type)) new_fnc();
         }
     }, fnc);
 }

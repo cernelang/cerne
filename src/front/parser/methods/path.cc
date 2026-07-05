@@ -72,7 +72,7 @@ bool start_param(cerne::ParseMachine* machine, bool* pure, cerne::Token& token, 
  */
 uint8_t parse_keyed_element(cerne::ParseMachine* machine, std::unique_ptr<cerne::InitializerData>& initializer_data, cerne::Token& token) { 
     // if our initializer is unkeyed, makes no sense to have a keyed element, so we throw an error
-    if(initializer_data->values.size() > 0 && !initializer_data->is_keyed) {
+    if(!initializer_data->values.empty() && !initializer_data->is_keyed) {
         cerne::cerror(
             machine->file_path,
             ERR_UNEXPECTED_SYMBOL,
@@ -101,8 +101,7 @@ uint8_t parse_keyed_element(cerne::ParseMachine* machine, std::unique_ptr<cerne:
         return 1;
     }
 
-    auto& equals = machine->peek(1);
-    if(equals.type != EQU) {
+    if(auto& equals = machine->peek(1); equals.type != EQU) {
         cerne::cerror(
             machine->file_path,
             ERR_UNEXPECTED_SYMBOL,
@@ -194,7 +193,7 @@ bool start_scope(cerne::ParseMachine* machine, bool* pure, cerne::Token& token, 
             initializer_element->value = std::move(node);
             initializer_data->values.push_back(std::move(initializer_element));
             continue;
-        };
+        }
     }
 
     // check if we have a } to close the initializer

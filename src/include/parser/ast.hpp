@@ -53,6 +53,40 @@ namespace cerne {
     };
 
     /**
+     * PrefixExpr is used for unary operators
+     * (span, unique_ptr<Node> value, TokenTypes op)
+     */
+    struct PrefixExpr : Node {
+        std::unique_ptr<Node> value;
+        TokenTypes op;
+
+        explicit PrefixExpr(
+            Span s, 
+            std::unique_ptr<Node> value, 
+            TokenTypes op
+        ) : Node(NodeType::PrefixExpr, s), value(std::move(value)), op(op) {};
+
+        JSON to_json() override;
+    };
+
+    /**
+     * SuffixExpr is used for postfix operators
+     * (span, unique_ptr<Node> value, TokenTypes op)
+     */
+    struct SuffixExpr : Node {
+        std::unique_ptr<Node> value;
+        TokenTypes op;
+
+        explicit SuffixExpr(
+            Span s, 
+            std::unique_ptr<Node> value, 
+            TokenTypes op
+        ) : Node(NodeType::SuffixExpr, s), value(std::move(value)), op(op) {};
+
+        JSON to_json() override;
+    };
+
+    /**
      * a <operator> b
      */
     struct BinaryExpr : Node {

@@ -23,17 +23,24 @@ namespace cerne {
         REGISTER,
         NUMBER,
 
+        // native assembly
+        ASM_STARTER,    // @
+
         // arithmetic
         PLUS,
         MINUS,
         DIV,
         MUL,
+        MODULO,         // %
 
         // bit-related
         BIT_AND,        // &
         BIT_OR,         // |
         BIT_XOR,        // ^
-        BIT_NOT,        // !
+        BIT_NOT,        // ~
+
+        // logical operators (others are on the conjectures list)
+        NOT,            // !
 
         // compairison operators
         GREATER_THAN,   // <
@@ -106,15 +113,20 @@ namespace cerne {
         { TokenTypes::REGISTER, "Register" },
         { TokenTypes::NUMBER, "Number" },
 
+        { TokenTypes::ASM_STARTER, "AsmStarter" },
+
         { TokenTypes::PLUS, "Plus" },
         { TokenTypes::MINUS, "Minus" },
         { TokenTypes::DIV, "Div" },
         { TokenTypes::MUL, "Mul" },
+        { TokenTypes::MODULO, "Modulo" },
         
         { TokenTypes::BIT_AND, "BitAnd" },
         { TokenTypes::BIT_OR, "BitOr" },
         { TokenTypes::BIT_XOR, "BitXor" },
         { TokenTypes::BIT_NOT, "BitNot" },
+
+        { TokenTypes::NOT, "Not" },
 
         { TokenTypes::GREATER_THAN, "GreaterThan" },
         { TokenTypes::LESS_THAN, "LessThan" },
@@ -175,16 +187,32 @@ namespace cerne {
      */
     const std::vector<TokenTypes> unary = {
         TokenTypes::MINUS,      // unary minus
-        TokenTypes::BIT_NOT,    // negation
+        TokenTypes::BIT_NOT,    // bit negation
+        TokenTypes::BIT_XOR,    // bit exclusive or
+        TokenTypes::BIT_OR,     // bit or
+        TokenTypes::NOT,        // logical negation
         TokenTypes::MUL,        // de-reference
-        TokenTypes::BIT_AND     // reference
+        TokenTypes::BIT_AND,    // reference
+        TokenTypes::INCREMENT,  // pre-increment
+        TokenTypes::DECREMENT   // pre-decrement
+    };
+
+    /**
+     * Allowed suffix operators
+     */
+    const std::vector<TokenTypes> suffix = {
+        TokenTypes::INCREMENT,  // post-increment
+        TokenTypes::DECREMENT   // post-decrement
     };
 
     /**
      * Right associative operators (for pratt parsing)
      */
     const std::vector<TokenTypes> right_associative = {
+        // exponentiation is right associative
         TokenTypes::POWER,
+
+        // assignment operators
         TokenTypes::EQU,
         TokenTypes::PLUS_EQU,
         TokenTypes::MINUS_EQU,

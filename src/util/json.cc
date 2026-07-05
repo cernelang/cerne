@@ -77,10 +77,9 @@ std::string cerne::json(const cerne::AST* ast, bool no_ast = false) {
     std::vector<cerne::JSON> root_nodes;
 
     if(!no_ast) {
-        for(size_t i = 0; i < ast->root->node_list.size(); i++) {
-            const auto& node = ast->root->node_list[i];
+        std::ranges::for_each(ast->root->node_list, [&root_nodes](const std::unique_ptr<cerne::Node>& node) {
             root_nodes.push_back(node->to_json());
-        }
+        });
     }
 
     builder->add_property("errors", std::format("{}", ast->errors));

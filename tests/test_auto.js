@@ -36,12 +36,12 @@ function run(tests) {
         // run each test and match output with expected output (if current test file ends in _fail.ce, output json should have errors, otherwise it should include 0 errors)
         for(const test of tests) {
             // expected output (false means errors are expected, true means no errors are expected)
-            const expected = test.endsWith("_fail.ce") ? false : true;
+            const expected = !test.endsWith("_fail.ce");
 
             // run the test with the cerne executable and capture output
             const { error } = spawnSync(cerne_executable, [test, "--dump=ast"], { encoding: "utf-8" });
             if(error) {
-                console.error(`[cerne] [test]: Error running test ${test}:`, error);
+                console.error(`\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mError running test ${test}:\x1b[0m`, error);
                 all_passed = false;
                 continue;
             }
@@ -60,11 +60,13 @@ function run(tests) {
                 const has_errors = output.errors > 0;
 
                 if(has_errors === expected) {
-                    console.error(`[cerne] [test]: Test ${test} failed. Expected errors: ${!expected}, Actual errors: ${has_errors}`);
+                    console.error(`\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mTest ${test} failed. Expected errors: ${!expected}, Actual errors: ${output.errors}\x1b[0m`);
                     all_passed = false;
+                } else {
+                    console.log(`\x1b[38;5;122;1m[cerne] [test]: \x1b[38;5;255;1mTest ${test} passed. Expected errors: ${!expected}, Actual errors: ${output.errors}\x1b[0m`);
                 }
             } catch(err) {
-                console.error(`[cerne] [test]: Error reading or parsing output for test ${test}:`, err);
+                console.error(`\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mError reading or parsing output for test ${test}:\x1b[0m`, err);
                 all_passed = false;
                 delete_file = false; // don't delete the output file so we can manually check what's wrong
             }
@@ -73,7 +75,7 @@ function run(tests) {
             if(delete_file) {
                 fs.unlink(output_path, err => {
                     if(err) {
-                        console.error(`[cerne] [test]: Error removing output file for test ${test}:`, err);
+                        console.error(`\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mError removing output file for test ${test}:\x1b[0m`, err);
                     }
                 });
             }
@@ -88,7 +90,7 @@ function run(tests) {
 fs.readdir(test_dir, (err, files) => {
     // error reading the actual directory
     if(err) {
-        console.error("[cerne] [test]: Error reading test directory:", err);
+        console.error("\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mError reading test directory:\x1b[0m", err);
         return;
     }
 
@@ -98,11 +100,11 @@ fs.readdir(test_dir, (err, files) => {
     // test runner
     run(test_files).then(success => {
         if(success) {
-            console.log(`[cerne] [test (${test_files.length} tests)]: Output was as expected for all tests.`);
+            console.log(`\x1b[38;5;122;1m[cerne] [test (${test_files.length} tests)]: \x1b[38;5;255;1mOutput was as expected for all tests.\x1b[0m`);
         } else {
-            console.error("[cerne] [test]: Output did not match expected output for some tests. Check the logs above for details.");
+            console.error("\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mOutput did not match expected output for some tests. Check the logs above for details.\x1b[0m");
         }
     }).catch(err => {
-        console.error("[cerne] [test]: Error running tests:", err);
+        console.error("\x1b[38;5;9;1m[cerne] [test]: \x1b[38;5;255;1mError running tests:\x1b[0m", err);
     });
 });

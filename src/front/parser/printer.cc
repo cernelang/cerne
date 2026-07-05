@@ -64,6 +64,22 @@ cerne::JSON cerne::LiteralExpr::to_json() {
     return json;
 }
 
+cerne::JSON cerne::PrefixExpr::to_json() {
+    cerne::JSON json;
+    json.properties["value"] = value->to_json();
+    json.properties["operation_type"] = TokenTypeNames.at(op);
+    json.properties["type"] = "PrefixExpr";
+    return json;
+}
+
+cerne::JSON cerne::SuffixExpr::to_json() {
+    cerne::JSON json;
+    json.properties["value"] = value->to_json();
+    json.properties["operation_type"] = TokenTypeNames.at(op);
+    json.properties["type"] = "SuffixExpr";
+    return json;
+}
+
 cerne::JSON cerne::BinaryExpr::to_json() {
     cerne::JSON json;
     json.properties["type"] = "BinaryExpr";
@@ -116,7 +132,7 @@ cerne::JSON cerne::VarDecl::to_json() {
     json.properties["is_const"] = std::format("{}", is_const);
     json.properties["uninitialized"] = std::format("{}", uninitialized);
     json.properties["var_type"] = path_to_json(var_type.get());
-    json.properties["value"] = value ? JSONBuilder{value->to_json()}.build() : "null";
+    json.properties["value"] = value ? JSONBuilder{value->to_json()}.json : JSON{};
     json.properties["type"] = "VarDecl";
     return json;
 }

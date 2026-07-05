@@ -53,6 +53,7 @@ std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) 
     if(arrow.type == cerne::TokenTypes::ARROW) {
         machine->advance();
         fun_type = machine->parse_path(true);
+        machine->advance(); // skip over last token of the path
     }
 
     // now it should parse the scope

@@ -59,6 +59,7 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
         
         // after parse_type, offset will already be at the next token after type declaration, so no need to increment again
         vartype=machine->parse_path(true);
+        machine->advance(); // skip over last token of the path
     }
 
     // check for an equal sign

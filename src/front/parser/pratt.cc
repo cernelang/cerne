@@ -19,43 +19,57 @@
         // conjectures & high precedence symbols
         case TokenTypes::INCREMENT:
         case TokenTypes::DECREMENT:
-            return 11;
+            return 17;
         case TokenTypes::POWER:
-            return 10;
+            return 15;
 
         // arithmetic
         case TokenTypes::MUL:
         case TokenTypes::DIV:
-            return 9;
+        case TokenTypes::MODULO:
+            return 14;
         case TokenTypes::PLUS:
         case TokenTypes::MINUS:
-            return 8;
+            return 13;
 
         // bit shifts
         case TokenTypes::LEFT_SHIFT:
         case TokenTypes::RIGHT_SHIFT:
-            return 7;
-
-        // bitwise
-        case TokenTypes::BIT_AND:
-        case TokenTypes::BIT_OR:
-        case TokenTypes::BIT_XOR:
-        case TokenTypes::BIT_NOT:
-            return 6;
-
-        // pipelines are more prioritized than comparisons, but still less than bitwise
-        case TokenTypes::PIPELINE:
-        case TokenTypes::RANGE:
-            return 5;
+            return 12;
 
         // comparisons
         case TokenTypes::GREATER_THAN:
         case TokenTypes::LESS_THAN:
+        case TokenTypes::GREATER_EQUAL:
+        case TokenTypes::LESS_EQUAL:
+            return 11;
+
+        // equality
         case TokenTypes::EQUAL:
         case TokenTypes::NOT_EQUAL:
-            return 4;
+            return 10;
+            
+        // bitwise operators
+        case TokenTypes::BIT_AND:
+            return 9;
+        case TokenTypes::BIT_XOR:
+            return 8;
+        case TokenTypes::BIT_OR:
+            return 7;
+            
+        // logical
+        case TokenTypes::AND:
+            return 6;
+        case TokenTypes::OR:
+            return 5;
 
-        // assignment operators are always last
+        // pipelines and ranges
+        case TokenTypes::RANGE:
+            return 4;
+        case TokenTypes::PIPELINE:
+            return 3;
+
+        // all other assignment operators should have 0 precedence (below OR expressions)
         case TokenTypes::EQU:
         case TokenTypes::PLUS_EQU:
         case TokenTypes::MINUS_EQU:
@@ -67,9 +81,31 @@
         case TokenTypes::BIT_NOT_EQU:
         case TokenTypes::LEFT_SHIFT_EQU:
         case TokenTypes::RIGHT_SHIFT_EQU:
-            return 1;
+            return 2;
 
         // no precedence tokens
+        default:
+            return 0;
+    }
+}
+
+/**
+ * Also used for pratt parsing
+ * more specialized than get_score, this function is used for unary operators, since they have a different precedence than their binary counterparts
+ */
+[[nodiscard]] constexpr size_t cerne::get_unary_score(cerne::TokenTypes type) noexcept {
+    switch(type) {
+        // unary increment and decrement aka pre-increment and pre-decrement have the highest precedence
+        case TokenTypes::INCREMENT:
+        case TokenTypes::DECREMENT:
+        case TokenTypes::BIT_NOT:
+        case TokenTypes::NOT:
+        case TokenTypes::MUL:
+        case TokenTypes::BIT_AND:
+        case TokenTypes::MINUS:
+        case TokenTypes::PLUS:
+            return 16;
+
         default:
             return 0;
     }
@@ -116,10 +152,26 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
         default:
             // unary
             if(std::find(unary.begin(), unary.end(), type) != unary.end()) {
+                // consume unary
                 offset++;
                 
-            }
-            break;
+                // get right hand side of unary expression
+                auto right = parse_expr(get_unary_score(type));
+
+                // create a prefix expression node
+                return std::make_unique<cerne::PrefixExpr>(token.span, std::move(right), type); // type is op in this case
+            } 
+
+            // invalid expression starter, generate error and return nullptr
+            cerne::cerror(
+                file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid expression starter.", *(token.value))),
+                token.span
+            );
+            errors++;
+            return nullptr;
     }
 
     return nullptr;
@@ -130,9 +182,16 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
     auto& token = list[offset];
     auto precedence = get_score(token.type);
     auto op = token.type;
-
-    offset++;
     
+    // consume operator token
+    offset++;
+
+    // check if op is a suffix operator
+    if(std::ranges::find(suffix, op) != suffix.end()) {
+        return std::make_unique<cerne::SuffixExpr>(token.span, std::move(lhs), op);
+    }
+    
+    // create rhs node for binary expression
     std::unique_ptr<Node> rhs = nullptr;
 
     // for right associative operators
@@ -151,31 +210,13 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
  * Uses pratt parsing to parse expressions
  */
 std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs) {
-    // first token we parse, we check if the current token is a prefix or primary token (allowed to start an expression), if not, we generate an error and return
-    const auto& token = list[offset];
-
-    if( 
-        token.type != TokenTypes::IDENTIFIER && 
-        token.type != TokenTypes::NUMBER && 
-        token.type != TokenTypes::STRING && 
-        token.type != TokenTypes::FSTRING && 
-        token.type != TokenTypes::SSTRING &&
-        std::find(unary.begin(), unary.end(), token.type) == unary.end() &&
-        lhs == nullptr
-    ) {
-        // generate an error and return
-        cerror(
-            file_path, 
-            ERR_UNEXPECTED_TOKEN,
-            std::format("Unexpected token `{}` at {}:{}", cerne::TokenTypeNames.at(token.type), token.span.line, token.span.col), 
-            cerne::code_snippet(code_sv, token.span, std::format("`{}` cannot start an expression.", cerne::TokenTypeNames.at(token.type))),
-            token.span
-        );
-        return nullptr;
-    }
-
     // now we call parse_nud() to parse the left side of the expression
     auto left = (lhs) ? std::move(lhs) : parse_nud();
+
+    if(!left) {
+        // if there's no left node, it means the current token is not a valid expression starter, so we return nullptr (since parse_nud() already generates the error if needed)
+        return nullptr;
+    }
 
     while(offset < list.size() && get_score(list[offset].type) > precedence) {
         left = parse_infix(std::move(left));

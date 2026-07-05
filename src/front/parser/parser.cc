@@ -58,19 +58,21 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
     if(next_token.type == cerne::TokenTypes::IDENTIFIER) {
         auto& equals = machine->peek(2);
 
+        // if there isn't an equals, it's an uninitialized variable declaration
         if(equals.type != cerne::TokenTypes::EQU) {
-            cerne::cerror(
-                machine->file_path, 
-                ERR_UNEXPECTED_TOKEN,
-                std::format("Unexpected token `{}` at {}:{}", *(equals.value), equals.span.line, equals.span.col), 
-                cerne::code_snippet(machine->code_sv, equals.span, std::format("`{}` is not a valid token here.", *(equals.value))),    
-                equals.span
+            return std::make_unique<cerne::VarDecl>(
+                path->span, 
+                *(next_token.value), 
+                false, 
+                true, 
+                std::move(path), 
+                nullptr
             );
-            machine->errors++;
-            return nullptr;
         }
 
-        machine->advance(3); // advance past the identifier, the variable name, and the equals sign
+        // initialized variable declaration
+
+        machine->advance(3); // advance past the identifier, the variable name and the equals sign
 
         // now the value should be an expression, so we parse it
         auto value = machine->parse_expr(0);

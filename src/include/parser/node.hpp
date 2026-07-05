@@ -14,11 +14,13 @@
 #include "../lexer.hpp"
 
 namespace cerne {
-    // we begin by declaring what a node even is
+    // we begin by declaring what a node even is (node.hpp)
     enum class NodeType {
         Leaf,
         LiteralExpr,
         BinaryExpr,
+        PrefixExpr,
+        SuffixExpr,
         Parameter,
         Scope,
         ReturnStmt,
@@ -34,6 +36,8 @@ namespace cerne {
         {NodeType::Leaf, "Leaf"},
         {NodeType::LiteralExpr, "LiteralExpr"},
         {NodeType::BinaryExpr, "BinaryExpr"},
+        {NodeType::PrefixExpr, "PrefixExpr"},
+        {NodeType::SuffixExpr, "SuffixExpr"},
         {NodeType::Parameter, "Parameter"},
         {NodeType::Scope, "Scope"},
         {NodeType::ReturnStmt, "ReturnStmt"},

@@ -119,6 +119,7 @@ namespace cerne {
     };
 
     [[nodiscard]] constexpr size_t get_score(TokenTypes type) noexcept;
+    [[nodiscard]] constexpr size_t get_unary_score(cerne::TokenTypes type) noexcept;
     std::unique_ptr<AST> parse(const std::string_view& code_sv, tokenlist& list, const char* file_path, const args& options);
 }
 
