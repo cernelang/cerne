@@ -30,7 +30,7 @@ void cerne::SymbolTable::build() {
                 };
                 const auto& entry = FunctionEntry{
                     .base_data = base_entry,
-                    .return_type = std::make_unique<Path>(std::move(*fun_node->return_type)),
+                    .return_type = std::move(fun_node->return_type),
                     .parameters = std::move(fun_node->parameters)
                 };
 
