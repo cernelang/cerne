@@ -209,11 +209,11 @@ namespace cerne {
 
     struct ImportNode : Node {
         std::string file_path;
-        Span file_path_span;
+        Span file_path_span = {0,0,0,0};
         std::string user;
-        Span user_span;
+        Span user_span = {0,0,0,0};
         std::vector<std::string> package_path;
-        std::vector<Span> package_path_spans;
+        std::vector<Span> package_path_spans = {};
         bool is_path = true;
         bool is_package = false;
         bool is_from_user = false;
