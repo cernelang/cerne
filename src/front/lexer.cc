@@ -200,11 +200,11 @@ class LexerMachine {
 
         void number(char c) {
             // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
-            std::string number = number_began_in_dot ? "0" : ""; // we put a 0 so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
+            std::string number = number_began_in_dot ? "0." : ""; // we put a 0. so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
             size_t len = 1;
             bool error = false;
             size_t error_at = 0;
-            uint8_t dots = 0;
+            uint8_t dots = number_began_in_dot;
 
             // reset to false
             number_began_in_dot = false;
@@ -317,7 +317,6 @@ class LexerMachine {
             );
 
             // set number_began_in_dot to true and reset offset back so number parses the first dot correctly
-            offset--;
             number_began_in_dot = true;
             push(std::move(range));
             return;

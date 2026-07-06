@@ -332,6 +332,7 @@ std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine*
     }
 
     element->name = *(token.value);
+    element->name_span = token.span;
 
     machine->advance(); // advance past the identifier
 
@@ -417,6 +418,7 @@ std::unique_ptr<cerne::Path> cerne::create_simple_type(const std::string& name, 
     path_elements.reserve(1);
     auto element = cerne::BasicPathElement{
         .name=name,
+        .name_span=span,
         .is_member=false,
         .modifiers={}
     };

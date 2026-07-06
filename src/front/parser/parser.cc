@@ -63,6 +63,7 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
             return std::make_unique<cerne::VarDecl>(
                 path->span, 
                 *(next_token.value), 
+                next_token.span,
                 false, 
                 true, 
                 std::move(path), 
@@ -80,6 +81,7 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
         return std::make_unique<cerne::VarDecl>(
             path->span, 
             *(next_token.value), 
+            next_token.span,
             false, 
             false, 
             std::move(path), 

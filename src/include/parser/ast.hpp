@@ -116,6 +116,9 @@ namespace cerne {
         // name of the variable in the parameter
         std::string name;
 
+        // name span for diagnostics
+        Span name_span;
+
         // type of the parameter(s)
         std::unique_ptr<Path> ptype;
 
@@ -123,8 +126,9 @@ namespace cerne {
         explicit Parameter(
             Span s,
             bool u = false,
-            const std::string& name = ""
-        ) : Node(NodeType::Parameter, s), unpack(u), name(name) {};
+            const std::string& name = "",
+            const Span& name_span = {}
+        ) : Node(NodeType::Parameter, s), unpack(u), name(name), name_span(name_span) {};
         
         JSON to_json() override;
     };
@@ -163,14 +167,18 @@ namespace cerne {
         // identifier
         std::string name;
 
+        // again for diagnostics
+        Span name_span;
+
         // constructor for the function node (as in function definition, not declaration nor call)
         explicit FunNode(
             const Span& span,
             std::vector<std::unique_ptr<Parameter>> parameters, 
             std::unique_ptr<Scope> body, 
             std::unique_ptr<Path> return_type, 
-            const std::string& name = ""
-        ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name) {};
+            const std::string& name = "",
+            const Span& name_span = {}
+        ) : Node(NodeType::FunNode, span), parameters(std::move(parameters)), body(std::move(body)), return_type(std::move(return_type)), name(name), name_span(name_span) {};
         
         JSON to_json() override;
     };
@@ -178,6 +186,7 @@ namespace cerne {
     // variable declaration
     struct VarDecl : Node {
         std::string name;
+        Span name_span;
         bool is_const;
         bool uninitialized;
         std::unique_ptr<Path> var_type;
@@ -186,11 +195,12 @@ namespace cerne {
         explicit VarDecl(
             const Span& span,
             const std::string& name = "",
+            const Span& name_span = {},
             bool is_const = false,
             bool uninitialized = false,
             std::unique_ptr<Path> var_type = nullptr,
             std::unique_ptr<Node> value = nullptr
-        ) : Node(NodeType::VarDecl, span), name(name), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
+        ) : Node(NodeType::VarDecl, span), name(name), name_span(name_span), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
 
         JSON to_json() override;
     };
@@ -199,8 +209,11 @@ namespace cerne {
 
     struct ImportNode : Node {
         std::string file_path;
+        Span file_path_span;
         std::string user;
+        Span user_span;
         std::vector<std::string> package_path;
+        std::vector<Span> package_path_spans;
         bool is_path = true;
         bool is_package = false;
         bool is_from_user = false;

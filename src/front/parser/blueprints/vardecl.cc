@@ -34,13 +34,14 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
     machine->advance();
 
     // create a path for the auto type
-    auto auto_type = cerne::create_simple_type("auto");
+    auto auto_type = cerne::create_simple_type("auto", id.span);
 
     // (if there are no equals or type declarations right away, it's an unitialized "auto" variable)
     if(machine->offset >= list.size() || list[machine->offset].type == TokenTypes::END) {
         return std::make_unique<VarDecl>(
             id.span,
             var_name,
+            id.span,
             is_const,
             true, // is uninitialized
             std::move(auto_type),
@@ -79,12 +80,18 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
 
     // now build the variable declaration node
     auto vardec = std::make_unique<VarDecl>(
-        id.span,
+        Span{
+            id.span.line,
+            id.span.col,
+            id.span.offset,
+            id.span.length + id.span.offset - value->span.offset
+        },
         var_name,
+        id.span,
         is_const,
         uninitialized, 
         std::move(vartype),
-        value ? std::move(value) : nullptr
+        std::move(value)
     );
 
     return vardec;

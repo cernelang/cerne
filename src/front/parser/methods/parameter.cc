@@ -45,11 +45,12 @@ std::unique_ptr<cerne::Parameter> define_parameter(bool isunpack, const cerne::T
     auto param = std::make_unique<cerne::Parameter>(
         token.span,
         isunpack,
-        *token.value.get()
+        *token.value.get(),
+        token.span
     );
 
     // change the parameter type to "any" by default
-    param->ptype = cerne::create_simple_type("any");
+    param->ptype = cerne::create_simple_type("any", token.span);
 
     return param;
 }
@@ -71,6 +72,14 @@ void update_parameter(cerne::ParseMachine* machine, cerne::Parameter* param) {
     auto type = machine->parse_path(true);
     if(type->pure_path && type->basic_path.size() > 0) {
         param->ptype = std::move(type);
+
+        // update parameter's global span to include the type span as well (for diagnostics)
+        param->span = cerne::Span{
+            .line=param->span.line,
+            .col=param->span.col,
+            .offset=param->span.offset,
+            .length=type->span.offset + type->span.length - param->span.offset
+        };
     }
 }
 

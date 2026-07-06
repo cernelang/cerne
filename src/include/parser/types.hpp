@@ -129,6 +129,8 @@ namespace cerne {
 
     struct BasicPathElement {
         std::string name;
+        Span name_span;
+
         bool is_member;
 
         // you can have multiple modifiers (syntax-wise) in a single path element, however, since order is necessary to be preserved, you must treat modifiers as one single type and then have a variant for the data itself to differentiate

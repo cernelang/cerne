@@ -46,7 +46,7 @@ std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) 
     if(!machine->expect_or({TokenTypes::ARROW, TokenTypes::START_SCOPE})) return nullptr;
 
     // make a default type (void)
-    auto fun_type = cerne::create_simple_type("void");
+    auto fun_type = cerne::create_simple_type("void", id.span);
 
     // check if explicit return type is provided (if there is an arrow)
     const auto& arrow = machine->peek();
@@ -88,7 +88,8 @@ std::unique_ptr<cerne::Node> cerne::Fun(const cerne::blueprint_arguments& args) 
         std::move(parameters),
         std::move(scope),
         std::move(fun_type),
-        *id.value.get()
+        *id.value.get(),
+        id.span
     );
 
     return fun;

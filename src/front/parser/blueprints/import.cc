@@ -15,11 +15,12 @@ using enum cerne::TokenTypes;
 /**
  * Simple utility to follow the import path
  */
-std::vector<std::string> follow_import_path(const cerne::blueprint_arguments& args) {
+void follow_import_path(const cerne::blueprint_arguments& args, std::unique_ptr<cerne::ImportNode>& current_import) {
     const auto& machine = args.machine;
     std::vector<std::string> path;
+    std::vector<cerne::Span> path_spans;
 
-    if(!machine->expect(IDENTIFIER)) return path;
+    if(!machine->expect(IDENTIFIER)) return;
 
     while(machine->offset < machine->list.size()) {
         if(!machine->expect_or({IDENTIFIER, DOT}, true)) break;
@@ -29,19 +30,24 @@ std::vector<std::string> follow_import_path(const cerne::blueprint_arguments& ar
         // we simply push everytime there's an identifier, if there's a dot we just keep going
         if(current.type == IDENTIFIER) {
             path.push_back(*(current.value));
+            path_spans.push_back(current.span);
         } else {
             machine->advance();
-            if(!machine->expect(IDENTIFIER)) return {}; // if after the dot there's no identifier, then it's an error and we return an empty path
+            if(!machine->expect(IDENTIFIER)) return; // if after the dot there's no identifier, then it's an error and we return an empty path
 
             // else we push the identifier after the dot and keep going
             const auto& nextafterdot = machine->peek();
             path.push_back(*(nextafterdot.value));
+            path_spans.push_back(nextafterdot.span);
         }
 
         machine->advance();
     }
 
-    return path;
+    current_import->package_path = path;
+    current_import->package_path_spans = path_spans;
+
+    return;
 }
 
 /**
@@ -77,6 +83,7 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
         current_token.type == FSTRING
     ) {
         current_import->file_path = *(current_token.value);
+        current_import->file_path_span = current_token.span;
     } else {
         /*
             now if it's an identifier things get slightly more complicated since it can be a user or a package
@@ -90,9 +97,8 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
 
         if (next.type == DOT) {
             // it's a package
-            const auto& import_path = follow_import_path(args); // in this case, import_path is GUARANTEED to have at least 1 member (the first identifier), so no need to worry about error checking
+            follow_import_path(args, current_import); // in this case, import_path is GUARANTEED to have at least 1 member (the first identifier), so no need to worry about error checking
             current_import->is_package = true;
-            current_import->package_path = import_path;
         } else if(next.type == MEMBER_ACCESS) {
             // it's a user
 
@@ -100,18 +106,20 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
             machine->advance(2); 
 
             // here this is volatile, since the package path can be empty (like user::, in which there is no package specified)
-            const auto& import_path = follow_import_path(args); 
+            follow_import_path(args, current_import); 
 
             // we can just return nullptr since skip_to_next_end is handled by follow_import_path's error handling
-            if(import_path.empty()) return nullptr;
+            if(current_import->package_path.empty()) return nullptr;
 
+            // set other user import properties
             current_import->is_from_user = true;
             current_import->user = *(current_token.value);
-            current_import->package_path = import_path;
+            current_import->user_span = current_token.span;
         } else if(next.type == END) {
             // regular identifier import means it's just a single package import with nothing special about it, so we just set the package path to the identifier and set the is_package flag to true
             current_import->is_package = true;
             current_import->package_path.push_back(*(current_token.value));
+            current_import->package_path_spans.push_back(current_token.span);
         } else {
             // malformed error
             cerne::cerror(

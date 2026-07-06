@@ -13,6 +13,16 @@
 
 // quick helpers
 
+// convert span to JSON
+cerne::JSON span_to_json(const cerne::Span& span) {
+    cerne::JSON json;
+    json.properties["line"] = std::format("{}", span.line);
+    json.properties["col"] = std::format("{}", span.col);
+    json.properties["offset"] = std::format("{}", span.offset);
+    json.properties["length"] = std::format("{}", span.length);
+    return json;
+}
+
 // forward declare path_to_json 
 cerne::JSON path_to_json(const cerne::Path* path);
 
@@ -21,6 +31,7 @@ cerne::JSON path_element_to_json(const cerne::BasicPathElement& element) {
     
     // element's name and is_member
     json.properties["name"] = std::string(element.name);
+    json.properties["name_span"] = span_to_json(element.name_span);
     json.properties["is_member"] = std::format("{}", element.is_member);
 
     // go over all the modifiers (with for_each) and convert them to JSON
@@ -79,6 +90,7 @@ cerne::JSON path_to_json(const cerne::Path* path) {
     // construct path itself's JSON representation
     json.properties["pure_path"] = std::format("{}", path->pure_path);
     json.properties["elements"] = cerne::JSONBuilder{}.convert_array(elements_json);
+    json.properties["span"] = span_to_json(path->span);
     return json;
 }
 
@@ -89,6 +101,7 @@ cerne::JSON cerne::Leaf::to_json() {
     json.properties["value"] = value ? *value : "";
     json.properties["is_number"] = std::format("{}", is_number);
     json.properties["type"] = "Leaf";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -96,6 +109,7 @@ cerne::JSON cerne::LiteralExpr::to_json() {
     cerne::JSON json;
     json.properties["value"] = path_to_json(value.get());
     json.properties["type"] = "LiteralExpr";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -104,6 +118,7 @@ cerne::JSON cerne::PrefixExpr::to_json() {
     json.properties["value"] = value->to_json();
     json.properties["operation_type"] = TokenTypeNames.at(op);
     json.properties["type"] = "PrefixExpr";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -112,6 +127,7 @@ cerne::JSON cerne::SuffixExpr::to_json() {
     json.properties["value"] = value->to_json();
     json.properties["operation_type"] = TokenTypeNames.at(op);
     json.properties["type"] = "SuffixExpr";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -121,15 +137,18 @@ cerne::JSON cerne::BinaryExpr::to_json() {
     json.properties["left_hand_side"] = lhs->to_json();
     json.properties["right_hand_side"] = rhs->to_json();
     json.properties["operation_type"] = TokenTypeNames.at(op);
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
 cerne::JSON cerne::Parameter::to_json() {
     cerne::JSON json;
     json.properties["unpack"] = std::format("{}", unpack);
-    json.properties["symbol_name"] = name;
+    json.properties["name"] = name;
+    json.properties["name_span"] = span_to_json(name_span);
     json.properties["parameter_type"] = path_to_json(ptype.get());
     json.properties["type"] = "Parameter";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -142,6 +161,7 @@ cerne::JSON cerne::Scope::to_json() {
     }
     json.properties["nodes"] = cerne::JSONBuilder{}.convert_array(nodes_json);
     json.properties["type"] = "Scope";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -157,18 +177,22 @@ cerne::JSON cerne::FunNode::to_json() {
     json.properties["scope"] = body->to_json();
     json.properties["return_type"] = path_to_json(return_type.get());
     json.properties["name"] = name;
+    json.properties["name_span"] = span_to_json(name_span);
     json.properties["type"] = "FunNode";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
 cerne::JSON cerne::VarDecl::to_json() {
     cerne::JSON json;
     json.properties["name"] = name;
+    json.properties["name_span"] = span_to_json(name_span);
     json.properties["is_const"] = std::format("{}", is_const);
     json.properties["uninitialized"] = std::format("{}", uninitialized);
     json.properties["var_type"] = path_to_json(var_type.get());
     json.properties["value"] = value ? JSONBuilder{value->to_json()}.json : JSON{};
     json.properties["type"] = "VarDecl";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -182,18 +206,32 @@ cerne::JSON cerne::ReturnStmt::to_json() {
 
     json.properties["values"] = JSONBuilder{}.convert_array(values_json);
     json.properties["type"] = "ReturnStmt";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
 cerne::JSON cerne::ImportNode::to_json() {
     cerne::JSON json;
     json.properties["file_path"] = file_path;
+    json.properties["file_path_span"] = span_to_json(file_path_span);
     json.properties["user"] = user;
+    json.properties["user_span"] = span_to_json(user_span);
     json.properties["package_path"] = JSONBuilder{}.convert_array(package_path);
+
+    // convert package_path_spans to JSON array
+    std::vector<cerne::JSON> package_path_spans_json;
+    
+    std::ranges::for_each(package_path_spans, [&](const cerne::Span& span) {
+        package_path_spans_json.push_back(span_to_json(span));
+    });
+
+    json.properties["package_path_spans"] = JSONBuilder{}.convert_array(package_path_spans_json);
+
     json.properties["is_path"] = std::format("{}", is_path);
     json.properties["is_package"] = std::format("{}", is_package);
     json.properties["is_from_user"] = std::format("{}", is_from_user);
     json.properties["type"] = "ImportNode";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -201,6 +239,7 @@ cerne::JSON cerne::ExportNode::to_json() {
     cerne::JSON json;
     json.properties["symbol"] = symbol;
     json.properties["type"] = "ExportNode";
+    json.properties["span"] = span_to_json(span);
     return json;
 }
 
@@ -222,7 +261,7 @@ cerne::JSON cerne::CallData::to_json() {
 cerne::JSON cerne::InitializerElement::to_json() {
     cerne::JSON json;
     json.properties["key"] = key;
-    json.properties["key_span"] = std::format("line: {}, col: {}, offset: {}, length: {}", key_span.line, key_span.col, key_span.offset, key_span.length);
+    json.properties["key_span"] = span_to_json(key_span);
     json.properties["value"] = value->to_json();
     return json;
 }
