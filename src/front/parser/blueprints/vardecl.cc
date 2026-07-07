@@ -84,7 +84,7 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
             id.span.line,
             id.span.col,
             id.span.offset,
-            id.span.length + id.span.offset - value->span.offset
+            machine->peek(-1).span.offset - id.span.offset
         },
         var_name,
         id.span,
