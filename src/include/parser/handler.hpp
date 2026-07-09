@@ -40,6 +40,13 @@ namespace cerne {
     // _Const because Const was giving me problems for some reason
     std::unique_ptr<cerne::Node> _Const(const blueprint_arguments& args);
 
+    // conditional blueprints
+    std::unique_ptr<cerne::Node> If(const blueprint_arguments& args);
+
+    // these always return nullptr since you can't initialize a condition block without an initial if statement, they are here to report errors if they are used outside of a living condition block
+    std::unique_ptr<cerne::Node> Elif(const blueprint_arguments& args);
+    std::unique_ptr<cerne::Node> Else(const blueprint_arguments& args);
+
     // package manager and module system blueprints
     std::unique_ptr<cerne::Node> Import(const blueprint_arguments& args);
     std::unique_ptr<cerne::Node> Export(const blueprint_arguments& args);

@@ -19,6 +19,8 @@ namespace cerne {
         Leaf,
         LiteralExpr,
         BinaryExpr,
+        AssignmentExpr,
+        ComparisonExpr,
         PrefixExpr,
         SuffixExpr,
         Parameter,
@@ -26,6 +28,7 @@ namespace cerne {
         ReturnStmt,
         FunNode,
         VarDecl,
+        ConditionBlock,
         Import,
         Export,
         Program
@@ -36,6 +39,8 @@ namespace cerne {
         {NodeType::Leaf, "Leaf"},
         {NodeType::LiteralExpr, "LiteralExpr"},
         {NodeType::BinaryExpr, "BinaryExpr"},
+        {NodeType::AssignmentExpr, "AssignmentExpr"},
+        {NodeType::ComparisonExpr, "ComparisonExpr"},
         {NodeType::PrefixExpr, "PrefixExpr"},
         {NodeType::SuffixExpr, "SuffixExpr"},
         {NodeType::Parameter, "Parameter"},
@@ -43,6 +48,7 @@ namespace cerne {
         {NodeType::ReturnStmt, "ReturnStmt"},
         {NodeType::FunNode, "FunNode"},
         {NodeType::VarDecl, "VarDecl"},
+        {NodeType::ConditionBlock, "ConditionBlock"},
         {NodeType::Import, "Import"},
         {NodeType::Export, "Export"},
         {NodeType::Program, "Program"}

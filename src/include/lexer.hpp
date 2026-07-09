@@ -145,7 +145,7 @@ namespace cerne {
         { TokenTypes::COMMA, "Comma" },
         { TokenTypes::DOT, "Dot" },
         { TokenTypes::END, "End" },
-        { TokenTypes::EQU, "Equal" },
+        { TokenTypes::EQU, "Equ" },
         { TokenTypes::DEFINE, "Define" },
 
         { TokenTypes::ARROW, "Arrow" },
@@ -251,7 +251,7 @@ namespace cerne {
         "if", "elif", "else", 
         "while", "for", "in", "until", 
         "return", 
-        "match", "break"
+        "match", "case"
     };
 
     const std::vector<std::string> registers = {

@@ -361,7 +361,7 @@ std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine*
         // {.something=true} or {true} (initializers)
         if(token.type == START_SCOPE) {
             // check if it's supposed to be a type, and if it is, we break the loop
-            if(*is_type) {
+            if(*is_type || machine->no_init) {
                 break;
             }
             
@@ -436,6 +436,7 @@ std::unique_ptr<cerne::Path> cerne::create_simple_type(const std::string& name, 
  * parses a path
  * is_type makes it so it can ONLY be a pure path (aka a type path)
  * this means parse_path will stop parsing as soon as it encounters a call or an initializer
+ * (stops AFTER the last element of the path)
  */
 std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type) {
     auto path = std::make_unique<cerne::Path>();

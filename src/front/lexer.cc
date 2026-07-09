@@ -190,8 +190,8 @@ class LexerMachine {
                 std::make_unique<std::string>(word),
                 cerne::Span{
                     .line=line,
-                    .col=col-len,
-                    .offset=offset-len,
+                    .col=(col >= len ? col-len : 0),
+                    .offset=(offset >= len ? offset-len : 0),
                     .length=len
                 }
             );
@@ -246,8 +246,8 @@ class LexerMachine {
 
             const auto& span = cerne::Span{
                 .line=line,
-                .col=col-len,
-                .offset=offset-len,
+                .col=(col >= len ? col-len : 0),
+                .offset=(offset >= len ? offset-len : 0),
                 .length=len
             };
 
@@ -292,8 +292,8 @@ class LexerMachine {
                     std::make_unique<std::string>(possible_compound),
                     cerne::Span{
                         .line=line,
-                        .col=col-2,
-                        .offset=offset-2,
+                        .col=(col >= 3 ? col-3 : 0),
+                        .offset=(offset >= 3 ? offset-3 : 0),
                         .length=3
                     }
                 );
@@ -310,9 +310,9 @@ class LexerMachine {
                 std::make_unique<std::string>(possible_compound),
                 cerne::Span{
                     .line=line,
-                    .col=col-1,
-                    .offset=offset-1,
-                    .length=2
+                    .col=(col >= 3 ? col-3 : 0),
+                    .offset=(offset >= 3 ? offset-3 : 0),
+                    .length=3
                 }
             );
 
@@ -346,8 +346,8 @@ class LexerMachine {
                         std::make_unique<std::string>(possible_conjecture),
                         cerne::Span{
                             .line=line,
-                            .col=col-1,
-                            .offset=offset-1,
+                            .col=(col >= 1 ? col-1 : 0),
+                            .offset=(offset >= 1 ? offset-1 : 0),
                             .length=2
                         }
                     );
@@ -377,8 +377,8 @@ class LexerMachine {
                             std::make_unique<std::string>(std::string{c}),
                             cerne::Span{
                                 .line=line,
-                                .col=col-1,
-                                .offset=offset,
+                                .col=(col >= 1 ? col-1 : 0),
+                                .offset=(offset >= 1 ? offset-1 : 0),
                                 .length=1
                             }
                         );
@@ -394,8 +394,8 @@ class LexerMachine {
                         std::make_unique<std::string>(std::string{c}),
                         cerne::Span{
                             .line=line,
-                            .col=col-1,
-                            .offset=offset,
+                            .col=(col >= 1 ? col-1 : 0),
+                            .offset=(offset >= 1 ? offset-1 : 0),
                             .length=1
                         }
                     );

@@ -140,6 +140,7 @@ namespace cerne {
     using BasicPath = std::vector<BasicPathElement>;
 
     struct Path {
+        std::unique_ptr<Node> base = nullptr; // pre-constructed node, like (my_space::my_class{}).hello, my_space::my_class{} is the base node
         BasicPath basic_path;
 
         // keep span information for diagnostics

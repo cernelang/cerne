@@ -16,7 +16,6 @@
  */
 std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arguments& args, bool is_const) {
     const auto& machine = args.machine;
-    const auto& list = machine->list;
 
     // advance and check next token
     machine->advance();
@@ -36,8 +35,10 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
     // create a path for the auto type
     auto auto_type = cerne::create_simple_type("auto", id.span);
 
+    auto& current_token = machine->peek();
+
     // (if there are no equals or type declarations right away, it's an unitialized "auto" variable)
-    if(machine->offset >= list.size() || list[machine->offset].type == TokenTypes::END) {
+    if(current_token.type == TokenTypes::END) {
         return std::make_unique<VarDecl>(
             id.span,
             var_name,
@@ -50,20 +51,19 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
     }
 
     // now check for any explicit type declaration
-    const auto& def = list[machine->offset];
     std::unique_ptr<Path> vartype = nullptr;
 
-    if(def.type != TokenTypes::DEFINE) {
+    if(current_token.type != TokenTypes::DEFINE) {
         vartype=std::move(auto_type);
     } else {
-        machine->offset++;
+        machine->advance();
         
         // after parse_type, offset will already be at the next token after type declaration, so no need to increment again
         vartype=machine->parse_path(true); // parse_path already stops at the token after the path, so we don't need to advance here
     }
 
     // check for an equal sign
-    const auto& eq = list[machine->offset];
+    const auto& eq = machine->peek();
 
     // this is because we can have an unitialized TYPED variable, such as `let x: int`
     // but syntax rules apply for things like `let x: int _ ...` where _ is just an unexpected token in general
@@ -72,7 +72,7 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
 
     std::unique_ptr<Node> value = nullptr;
     bool uninitialized = true;
-    if(eq.type == TokenTypes::EQUAL) {
+    if(eq.type == TokenTypes::EQU) {
         machine->advance();
         value = machine->parse_expr(0);
         uninitialized = false;
@@ -84,7 +84,7 @@ std::unique_ptr<cerne::Node> cerne::commons::var_declaration(const blueprint_arg
             id.span.line,
             id.span.col,
             id.span.offset,
-            machine->peek(-1).span.offset - id.span.offset
+            (machine->peek(-1).span.offset + machine->peek(-1).span.length) - id.span.offset
         },
         var_name,
         id.span,

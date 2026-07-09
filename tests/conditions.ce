@@ -1,0 +1,16 @@
+import std.io
+let x: u8 = 10
+
+if x > 5 {
+    std::print("x is greater than 5")
+} elif(x == 5) {
+    std::print("x is equal to 5")
+} else {
+    std::print("x is less than 5")
+}
+
+if x {
+    std::print("x is truthy")
+} else {
+    std::print("x is falsy")
+}

@@ -69,7 +69,7 @@
         case TokenTypes::PIPELINE:
             return 3;
 
-        // all other assignment operators should have 0 precedence (below OR expressions)
+        // all other assignment operators should have lowest precedence (below OR expressions)
         case TokenTypes::EQU:
         case TokenTypes::PLUS_EQU:
         case TokenTypes::MINUS_EQU:
@@ -145,6 +145,30 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
 
             offset++;
 
+            // (path).something
+            auto& token = peek();
+            if(token.type == TokenTypes::DOT || token.type == TokenTypes::MEMBER_ACCESS) {
+                advance();
+                auto path = parse_path();
+
+                // anything other than ().identifier<path> is invalid syntax
+                if(!path) {
+                    cerne::cerror(
+                        file_path,
+                        ERR_UNEXPECTED_SYMBOL,
+                        std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                        cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid way to access a member. (expected identifier, got {})", *(token.value), TokenTypeNames.at(token.type))),
+                        token.span
+                    );
+                    errors++;
+                    return nullptr;
+                }
+
+                path->base = std::move(params);
+                path->basic_path[0].is_member = (token.type == TokenTypes::MEMBER_ACCESS);
+                return std::make_unique<cerne::LiteralExpr>(token.span, std::move(path));
+            }
+
             return params;
         }
 
@@ -198,8 +222,18 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
         // parse the right-hand side with lower precedence to get tokens of same precedence (like 2**3**4 = (2**(3**4))
         rhs = parse_expr(precedence - 1);
     } else {
-        // for left-associative operators, parse the right-hand side with the same precedencez
+        // for left-associative operators, parse the right-hand side with the same precedence
         rhs = parse_expr(precedence);
+    }
+
+    // assignment operations have score of 2, so instead of creating a new map, we could simply see if precedence is 2 and create an AssignmentExpr node
+    if(precedence == 2) {
+        return std::make_unique<cerne::AssignmentExpr>(token.span, std::move(lhs), std::move(rhs), op);
+    }
+    
+    // comparison operators have score of 11 and 10
+    if(precedence == 11 || precedence == 10) {
+        return std::make_unique<cerne::ComparisonExpr>(token.span, std::move(lhs), std::move(rhs), op);
     }
     
     return std::make_unique<cerne::BinaryExpr>(token.span, std::move(lhs), std::move(rhs), op);
@@ -207,6 +241,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
 
 /**
  * Uses pratt parsing to parse expressions
+ * (stops at after the last token of the expression)
  */
 std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs) {
     // now we call parse_nud() to parse the left side of the expression

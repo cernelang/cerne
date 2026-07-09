@@ -30,6 +30,7 @@ namespace cerne {
             size_t errors = 0;
             size_t warnings = 0;
             size_t scope = 0;
+            bool no_init = false;
             cerne::AST* ast;
             cerne::tokenlist& list;
             const char* file_path;
@@ -48,7 +49,7 @@ namespace cerne {
             ~ParseMachine()=default;
 
             // checks whether we've reached EOF, and if so, reports an error with the expected token and returns true, otherwise returns false
-            bool is_eof() const { return offset >= list.size(); };
+            bool is_eof() const { return (offset >= list.size()); };
 
             // subparse methods
             std::unique_ptr<Parameter> parse_parameter();

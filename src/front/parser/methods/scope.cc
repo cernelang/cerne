@@ -11,6 +11,7 @@
 
 /**
  * Subparse method responsible for parsing a scope
+ * (stops AT last token)
  */
 std::unique_ptr<cerne::Scope> cerne::ParseMachine::parse_scope() {
     const auto& start_token = list[offset];

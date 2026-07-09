@@ -16,7 +16,10 @@ const std::map<std::string, std::function<std::unique_ptr<cerne::Node>(const cer
     { "let", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Let) },
     { "const", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::_Const) },
     { "import", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Import) },
-    { "export", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Export) }
+    { "export", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Export) },
+    { "if", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::If) },
+    { "elif", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Elif) },
+    { "else", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Else) }
 };
 
 /**
@@ -117,6 +120,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse(cerne::Token& token) {
             return identifier_case(this);
         }
 
+        case TokenTypes::START_PARAM:
         case TokenTypes::STRING:
         case TokenTypes::FSTRING:
         case TokenTypes::SSTRING:

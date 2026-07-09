@@ -17,28 +17,22 @@
 std::unique_ptr<cerne::Node> cerne::Return(const cerne::blueprint_arguments& args) {
     const auto& machine = args.machine;
 
-    machine->offset++;
+    const auto& return_token = machine->peek();
+    machine->advance();
     if(machine->is_eof()) {
         cerne::cerror(
             machine->file_path,
             ERR_UNEXPECTED_EOF,
             "Expected an expression after `return`, but reached end of file.",
             "EOF",
-            Span{
-                .line = 0,
-                .col = 0,
-                .offset = machine->code_sv.size(),
-                .length = 0
-            }
+            return_token.span
         );
         machine->skip_to_next_end();
         machine->errors++;
         return nullptr;
     }
 
-    const auto& token = machine->peek();
-
-    auto return_node = std::make_unique<cerne::ReturnStmt>(token.span);
+    auto return_node = std::make_unique<cerne::ReturnStmt>(return_token.span);
 
     while(machine->peek().type != TokenTypes::END && machine->peek().type != TokenTypes::END_SCOPE) {
         auto expr = machine->parse_expr(0);
@@ -64,5 +58,7 @@ std::unique_ptr<cerne::Node> cerne::Return(const cerne::blueprint_arguments& arg
         }
     }
 
+    // update span length
+    return_node->span.length = (machine->peek(-1).span.offset + machine->peek(-1).span.length) - return_node->span.offset;
     return return_node;
 }

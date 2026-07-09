@@ -82,6 +82,9 @@ cerne::JSON path_to_json(const cerne::Path* path) {
     cerne::JSON json;
     std::vector<cerne::JSON> elements_json;
 
+    // base node
+    json.properties["base"] = path->base ? path->base->to_json() : cerne::JSON{};
+
     // using for_each to iterate through each element in the path itself and then convert it to a JSON array
     std::ranges::for_each(path->basic_path, [&](const cerne::BasicPathElement& element) {
         elements_json.push_back(path_element_to_json(element));
@@ -133,7 +136,7 @@ cerne::JSON cerne::SuffixExpr::to_json() {
 
 cerne::JSON cerne::BinaryExpr::to_json() {
     cerne::JSON json;
-    json.properties["type"] = "BinaryExpr";
+    json.properties["type"] = NodeTypeNames.at(type);
     json.properties["left_hand_side"] = lhs->to_json();
     json.properties["right_hand_side"] = rhs->to_json();
     json.properties["operation_type"] = TokenTypeNames.at(op);
@@ -192,6 +195,24 @@ cerne::JSON cerne::VarDecl::to_json() {
     json.properties["var_type"] = path_to_json(var_type.get());
     json.properties["value"] = value ? JSONBuilder{value->to_json()}.json : JSON{};
     json.properties["type"] = "VarDecl";
+    json.properties["span"] = span_to_json(span);
+    return json;
+}
+
+cerne::JSON cerne::ConditionBlock::to_json() {
+    cerne::JSON json;
+    std::vector<cerne::JSON> conditions_json;
+
+    std::ranges::for_each(conditions, [&](const std::pair<std::unique_ptr<Node>, std::unique_ptr<Scope>>& condition) {
+        cerne::JSON condition_json;
+        condition_json.properties["condition"] = condition.first->to_json();
+        condition_json.properties["scope"] = condition.second->to_json();
+        conditions_json.push_back(condition_json);
+    });
+
+    json.properties["conditions"] = JSONBuilder{}.convert_array(conditions_json);
+    json.properties["else_block"] = else_block ? else_block->to_json() : JSON{};
+    json.properties["type"] = "ConditionBlock";
     json.properties["span"] = span_to_json(span);
     return json;
 }

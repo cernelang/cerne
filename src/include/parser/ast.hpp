@@ -106,11 +106,53 @@ namespace cerne {
         ) : Node(NodeType::BinaryExpr, s), lhs(std::move(lhs)), rhs(std::move(rhs)), op(op) {};
     
         JSON to_json() override;
+
+        // for the other types of BinaryExpr
+        protected:
+            explicit BinaryExpr(
+                NodeType type,
+                Span s,
+                std::unique_ptr<Node> lhs,
+                std::unique_ptr<Node> rhs,
+                TokenTypes op
+            ) : Node(type, s), lhs(std::move(lhs)), rhs(std::move(rhs)), op(op) {};
+    };
+
+    /**
+     * a = b
+     * a += b
+     * ...
+     */
+    struct AssignmentExpr : BinaryExpr {
+        explicit AssignmentExpr(
+            Span s,
+            std::unique_ptr<Node> lhs,
+            std::unique_ptr<Node> rhs,
+            TokenTypes op
+        ) : BinaryExpr(NodeType::AssignmentExpr, s, std::move(lhs), std::move(rhs), op) {};
+        
+        // to_json is already implemented in BinaryExpr, no need to override it here
+    };
+
+    /**
+     * a < b
+     * a > b
+     * ...
+     */
+    struct ComparisonExpr : BinaryExpr {
+        explicit ComparisonExpr(
+            Span s,
+            std::unique_ptr<Node> lhs,
+            std::unique_ptr<Node> rhs,
+            TokenTypes op
+        ) : BinaryExpr(NodeType::ComparisonExpr, s, std::move(lhs), std::move(rhs), op) {};
+        
+        // to_json is already implemented in BinaryExpr, no need to override it here
     };
 
     // x: int
     struct Parameter : Node {
-        // <> (get all remaining parameters in front of it)
+        // ... (get all remaining parameters in front of it)
         bool unpack;
 
         // name of the variable in the parameter
@@ -201,6 +243,16 @@ namespace cerne {
             std::unique_ptr<Path> var_type = nullptr,
             std::unique_ptr<Node> value = nullptr
         ) : Node(NodeType::VarDecl, span), name(name), name_span(name_span), is_const(is_const), uninitialized(uninitialized), var_type(std::move(var_type)), value(std::move(value)) {};
+
+        JSON to_json() override;
+    };
+
+    // condition block
+    struct ConditionBlock : Node {
+        std::vector<std::pair<std::unique_ptr<Node>, std::unique_ptr<Scope>>> conditions = {};
+        std::unique_ptr<Scope> else_block = nullptr;
+
+        explicit ConditionBlock(const Span& span) : Node(NodeType::ConditionBlock, span) {};
 
         JSON to_json() override;
     };

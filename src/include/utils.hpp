@@ -52,6 +52,8 @@ constexpr uint8_t ERR_UNKNOWN_KEYWORD        = 4;
 constexpr uint8_t ERR_OPEN_SCOPE             = 5;
 constexpr uint8_t ERR_UNEXPECTED_EOF         = 6;
 constexpr uint8_t ERR_MALFORMED_IMPORT       = 7;
+constexpr uint8_t ERR_ELIF_OUTSIDE_IF        = 8;
+constexpr uint8_t ERR_ELSE_OUTSIDE_IF        = 9;
 
 // util injection in cerne namespace
 namespace cerne {
