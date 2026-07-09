@@ -261,20 +261,20 @@ namespace cerne {
 
     struct ImportNode : Node {
         std::string file_path;
-        Span file_path_span = {0,0,0,0};
+        Span file_path_span;
         std::string user;
-        Span user_span = {0,0,0,0};
+        Span user_span;
         std::vector<std::string> package_path;
-        std::vector<Span> package_path_spans = {};
-        bool is_path = true;
-        bool is_package = false;
-        bool is_from_user = false;
+        std::vector<Span> package_path_spans;
+        bool is_path;
+        bool is_package;
+        bool is_from_user;
 
         explicit ImportNode(
             const Span& span, 
             const std::string& file_path = "", 
             const std::string& user = ""
-        ) : Node(NodeType::Import, span), file_path(file_path), user(user) {};
+        ) : Node(NodeType::Import, span), file_path(file_path), file_path_span({0,0,0,0}), user(user), user_span({0,0,0,0}), package_path({}), package_path_spans({}), is_path(true), is_package(false), is_from_user(false) {};
 
         JSON to_json() override;
     };
