@@ -21,6 +21,7 @@ namespace cerne {
         BinaryExpr,
         AssignmentExpr,
         ComparisonExpr,
+        RangeExpr,
         PrefixExpr,
         SuffixExpr,
         Parameter,
@@ -29,6 +30,8 @@ namespace cerne {
         FunNode,
         VarDecl,
         ConditionBlock,
+        WhileNode,
+        ForNode,
         Import,
         Export,
         Program
@@ -41,6 +44,7 @@ namespace cerne {
         {NodeType::BinaryExpr, "BinaryExpr"},
         {NodeType::AssignmentExpr, "AssignmentExpr"},
         {NodeType::ComparisonExpr, "ComparisonExpr"},
+        {NodeType::RangeExpr, "RangeExpr"},
         {NodeType::PrefixExpr, "PrefixExpr"},
         {NodeType::SuffixExpr, "SuffixExpr"},
         {NodeType::Parameter, "Parameter"},
@@ -49,6 +53,8 @@ namespace cerne {
         {NodeType::FunNode, "FunNode"},
         {NodeType::VarDecl, "VarDecl"},
         {NodeType::ConditionBlock, "ConditionBlock"},
+        {NodeType::WhileNode, "WhileNode"},
+        {NodeType::ForNode, "ForNode"},
         {NodeType::Import, "Import"},
         {NodeType::Export, "Export"},
         {NodeType::Program, "Program"}

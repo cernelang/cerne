@@ -150,6 +150,19 @@ namespace cerne {
         // to_json is already implemented in BinaryExpr, no need to override it here
     };
 
+    /**
+     * a .. b
+     */
+    struct RangeExpr : BinaryExpr {
+        explicit RangeExpr(
+            Span s,
+            std::unique_ptr<Node> lhs,
+            std::unique_ptr<Node> rhs
+        ) : BinaryExpr(NodeType::RangeExpr, s, std::move(lhs), std::move(rhs), TokenTypes::RANGE) {};
+        
+        // to_json is already implemented in BinaryExpr, no need to override it here
+    };
+
     // x: int
     struct Parameter : Node {
         // ... (get all remaining parameters in front of it)
@@ -249,10 +262,59 @@ namespace cerne {
 
     // condition block
     struct ConditionBlock : Node {
-        std::vector<std::pair<std::unique_ptr<Node>, std::unique_ptr<Scope>>> conditions = {};
-        std::unique_ptr<Scope> else_block = nullptr;
+        std::vector<std::pair<std::unique_ptr<Node>, std::unique_ptr<Scope>>> conditions;
+        std::unique_ptr<Scope> else_block;
 
-        explicit ConditionBlock(const Span& span) : Node(NodeType::ConditionBlock, span) {};
+        explicit ConditionBlock(const Span& span) : Node(NodeType::ConditionBlock, span), conditions(), else_block(nullptr) {};
+
+        JSON to_json() override;
+    };
+
+    // while node
+    struct WhileNode : Node {
+        std::unique_ptr<Node> condition;
+        std::unique_ptr<Scope> body;
+
+        explicit WhileNode(
+            const Span& span,
+            std::unique_ptr<Node> condition,
+            std::unique_ptr<Scope> body
+        ) : Node(NodeType::WhileNode, span), condition(std::move(condition)), body(std::move(body)) {};
+
+        JSON to_json() override;
+    };
+
+    // for node
+    struct ForNode : Node {
+        // c style loop
+        std::unique_ptr<Node> init;
+        std::unique_ptr<Node> condition;
+        std::unique_ptr<Node> update;
+
+        // range style loop
+        std::unique_ptr<Node> variable;
+        std::unique_ptr<Node> range;
+        
+        std::unique_ptr<Scope> body;
+        
+        bool is_range_loop;
+        explicit ForNode(
+            const Span& span,
+            std::unique_ptr<Node> init = nullptr,
+            std::unique_ptr<Node> condition = nullptr,
+            std::unique_ptr<Node> update = nullptr,
+            std::unique_ptr<Node> variable = nullptr,
+            std::unique_ptr<Node> range = nullptr,
+            std::unique_ptr<Scope> body = nullptr,
+            bool is_range_loop = false
+        ) : Node(NodeType::ForNode, span), 
+            init(std::move(init)), 
+            condition(std::move(condition)), 
+            update(std::move(update)), 
+            variable(std::move(variable)), 
+            range(std::move(range)), 
+            body(std::move(body)),
+            is_range_loop(is_range_loop) {};
 
         JSON to_json() override;
     };

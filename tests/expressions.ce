@@ -11,3 +11,12 @@ a[0][1][2][3]
 foo(bar)[baz].qux<T>(x + y * z)
 a.b()[c].d{1,2,3}.e<T>().f
 a.b<T>(x + y * foo.bar()[z]).c{1, 2, other(x, y)}[index].d
+
+/*
+    classic C++ r-value post-increment test
+    this should fail during SEMA 
+    this is because post-increment, just like C++ is:
+    - not allowed to take a temporary rvalue 
+    - but cerne also parses longest match first, meaning it's x ++ ++ +y)
+*/
+let test = x+++++y

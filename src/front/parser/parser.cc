@@ -19,7 +19,10 @@ const std::map<std::string, std::function<std::unique_ptr<cerne::Node>(const cer
     { "export", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Export) },
     { "if", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::If) },
     { "elif", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Elif) },
-    { "else", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Else) }
+    { "else", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Else) },
+    { "while", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::While) },
+    { "until", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::Until) },
+    { "for", static_cast<std::unique_ptr<cerne::Node>(*)(const cerne::blueprint_arguments&)>(cerne::For) }
 };
 
 /**
@@ -63,6 +66,8 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
 
         // if there isn't an equals, it's an uninitialized variable declaration
         if(equals.type != cerne::TokenTypes::EQU) {
+            machine->advance(); // advance past the variable name (keeps in sync with parse_expr's dynamic)
+
             return std::make_unique<cerne::VarDecl>(
                 path->span, 
                 *(next_token.value), 
@@ -101,6 +106,8 @@ std::unique_ptr<cerne::Node> identifier_case(cerne::ParseMachine* machine) {
  * Global parse function, executes appropriate function depending on the current token
  */
 std::unique_ptr<cerne::Node> cerne::ParseMachine::parse(cerne::Token& token) {
+    if(is_eof()) return nullptr;
+
     switch(token.type) {
         case TokenTypes::MNEMONIC: {
             return parse_mnemonic();

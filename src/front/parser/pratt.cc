@@ -111,7 +111,7 @@
     }
 }
 
-std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
+std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud(bool quiet) {
     // initialize token with the token at the current offset on the list
     auto& token = list[offset];
     auto type = token.type;
@@ -119,7 +119,7 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
     switch (type) {
         // identifiers should call a LiteralExpr
         case TokenTypes::IDENTIFIER: {
-            auto path = parse_path(); // it already stops at the token after the path, so we don't need to advance here
+            auto path = parse_path(false, quiet); // it already stops at the token after the path, so we don't need to advance here
             return std::make_unique<cerne::LiteralExpr>(token.span, std::move(path));
         }
 
@@ -137,7 +137,13 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
         case TokenTypes::START_PARAM: {
             // advanced and call expr again
             offset++;
-            auto params = parse_expr(0);
+
+            auto prev_no_init = no_init;
+            no_init = false; // support initialization since it's inside of a guarded context
+
+            auto params = parse_expr(0, nullptr, quiet);
+
+            no_init = prev_no_init; // restore no_init to its previous state
 
             // after expression is parsed, check if the token it stopped at is a )
             // groups should begin with ( and end with )
@@ -149,17 +155,19 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
             auto& token = peek();
             if(token.type == TokenTypes::DOT || token.type == TokenTypes::MEMBER_ACCESS) {
                 advance();
-                auto path = parse_path();
+                auto path = parse_path(false, quiet);
 
                 // anything other than ().identifier<path> is invalid syntax
                 if(!path) {
-                    cerne::cerror(
-                        file_path,
-                        ERR_UNEXPECTED_SYMBOL,
-                        std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
-                        cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid way to access a member. (expected identifier, got {})", *(token.value), TokenTypeNames.at(token.type))),
-                        token.span
-                    );
+                    if(!quiet || !options.flags.contains("quiet")) {
+                        cerne::cerror(
+                            file_path,
+                            ERR_UNEXPECTED_SYMBOL,
+                            std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                            cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid way to access a member. (expected identifier, got {})", *(token.value), TokenTypeNames.at(token.type))),
+                            token.span
+                        );
+                    }
                     errors++;
                     return nullptr;
                 }
@@ -179,20 +187,22 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_nud() {
                 offset++;
                 
                 // get right hand side of unary expression
-                auto right = parse_expr(get_unary_score(type));
+                auto right = parse_expr(get_unary_score(type), nullptr, quiet);
 
                 // create a prefix expression node
                 return std::make_unique<cerne::PrefixExpr>(token.span, std::move(right), type); // type is op in this case
             } 
 
             // invalid expression starter, generate error and return nullptr
-            cerne::cerror(
-                file_path,
-                ERR_UNEXPECTED_SYMBOL,
-                std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
-                cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid expression starter.", *(token.value))),
-                token.span
-            );
+            if(!quiet || !options.flags.contains("quiet")) {
+                cerne::cerror(
+                    file_path,
+                    ERR_UNEXPECTED_SYMBOL,
+                    std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                    cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid expression starter.", *(token.value))),
+                    token.span
+                );
+            }
             errors++;
             return nullptr;
     }
@@ -226,6 +236,11 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
         rhs = parse_expr(precedence);
     }
 
+    // range has its own node type since it differs in logic from other binary expressions
+    if(token.type == TokenTypes::RANGE) {
+        return std::make_unique<cerne::RangeExpr>(token.span, std::move(lhs), std::move(rhs));
+    }
+
     // assignment operations have score of 2, so instead of creating a new map, we could simply see if precedence is 2 and create an AssignmentExpr node
     if(precedence == 2) {
         return std::make_unique<cerne::AssignmentExpr>(token.span, std::move(lhs), std::move(rhs), op);
@@ -243,9 +258,11 @@ std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_infix(std::unique_ptr<ce
  * Uses pratt parsing to parse expressions
  * (stops at after the last token of the expression)
  */
-std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs) {
+std::unique_ptr<cerne::Node> cerne::ParseMachine::parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs, bool quiet) {
+    if(is_eof()) return nullptr;
+
     // now we call parse_nud() to parse the left side of the expression
-    auto left = (lhs) ? std::move(lhs) : parse_nud();
+    auto left = (lhs) ? std::move(lhs) : parse_nud(quiet);
 
     if(!left) {
         // if there's no left node, it means the current token is not a valid expression starter, so we return nullptr (since parse_nud() already generates the error if needed)

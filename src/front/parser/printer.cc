@@ -217,6 +217,28 @@ cerne::JSON cerne::ConditionBlock::to_json() {
     return json;
 }
 
+cerne::JSON cerne::WhileNode::to_json() {
+    cerne::JSON json;
+    json.properties["condition"] = condition->to_json();
+    json.properties["body"] = body->to_json();
+    json.properties["type"] = "WhileNode";
+    json.properties["span"] = span_to_json(span);
+    return json;
+}
+
+cerne::JSON cerne::ForNode::to_json() {
+    cerne::JSON json;
+    json.properties["init"] = init ? init->to_json() : JSON{};
+    json.properties["condition"] = condition ? condition->to_json() : JSON{};
+    json.properties["update"] = update ? update->to_json() : JSON{};
+    json.properties["variable"] = variable ? variable->to_json() : JSON{};
+    json.properties["range"] = range ? range->to_json() : JSON{};
+    json.properties["body"] = body ? body->to_json() : JSON{};
+    json.properties["type"] = "ForNode";
+    json.properties["span"] = span_to_json(span);
+    return json;
+}
+
 cerne::JSON cerne::ReturnStmt::to_json() {
     cerne::JSON json;
     std::vector<cerne::JSON> values_json;

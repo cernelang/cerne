@@ -30,7 +30,11 @@ namespace cerne {
             size_t errors = 0;
             size_t warnings = 0;
             size_t scope = 0;
+
+            // initialization is not allowed for parsing paths
             bool no_init = false;
+
+            bool inside_stmt = false;
             cerne::AST* ast;
             cerne::tokenlist& list;
             const char* file_path;
@@ -54,11 +58,11 @@ namespace cerne {
             // subparse methods
             std::unique_ptr<Parameter> parse_parameter();
             std::unique_ptr<Scope> parse_scope();
-            std::unique_ptr<Path> parse_path(bool strict = false);
+            std::unique_ptr<Path> parse_path(bool strict = false, bool quiet = false);
             std::unique_ptr<Node> parse_mnemonic();
-            std::unique_ptr<Node> parse_nud();
+            std::unique_ptr<Node> parse_nud(bool quiet = false);
             std::unique_ptr<Node> parse_infix(std::unique_ptr<Node> lhs);
-            std::unique_ptr<Node> parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs = nullptr);
+            std::unique_ptr<Node> parse_expr(size_t precedence, std::unique_ptr<cerne::Node> lhs = nullptr, bool quiet = false);
             std::unique_ptr<Node> parse(Token& token);
 
             // helpers

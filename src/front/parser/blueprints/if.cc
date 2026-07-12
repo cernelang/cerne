@@ -19,6 +19,8 @@ bool parse_condition(const cerne::blueprint_arguments& args, std::unique_ptr<cer
 
     std::unique_ptr<cerne::Node> expr = nullptr;
     if(expect_expr) {
+        machine->no_init = true;
+        machine->inside_stmt = true;
         expr = machine->parse_expr(0);
         if(!expr) {
             cerne::cerror(
@@ -29,9 +31,14 @@ bool parse_condition(const cerne::blueprint_arguments& args, std::unique_ptr<cer
                 machine->peek().span
             );
             machine->errors++;
+            machine->inside_stmt = false;
             return false;
         }
     }
+
+    // initializers allowed inside of scopes
+    machine->no_init = false;
+    machine->inside_stmt = false;
 
     // parse the scope after the initial part of the statement (mnemonic + expression or just mnemonic if it's an else statement)
     auto scope = machine->parse_scope();
@@ -88,6 +95,7 @@ std::unique_ptr<cerne::Node> cerne::If(const cerne::blueprint_arguments& args) {
     auto& machine = args.machine;
 
     // disallow initalization in if blocks
+    bool prev_no_init = machine->no_init;
     machine->no_init = true;
 
     auto condition_block = std::make_unique<cerne::ConditionBlock>(machine->peek().span); // temporarily set the span to the if token, we update this at the end
@@ -95,7 +103,10 @@ std::unique_ptr<cerne::Node> cerne::If(const cerne::blueprint_arguments& args) {
 
     // immediately get first condition (mandatory)
     auto first_condition = parse_condition(args, condition_block, true);
-    if(!first_condition) return nullptr; // return if we fail to parse the first condition
+    if(!first_condition) {
+        machine->no_init = prev_no_init;
+        return nullptr; // return if we fail to parse the first condition
+    }
 
     // do the same for every other possible elif and eventually else
     while(!should_end && machine->offset < machine->list.size()) {
@@ -117,7 +128,7 @@ std::unique_ptr<cerne::Node> cerne::If(const cerne::blueprint_arguments& args) {
         (machine->peek(-1).span.offset + machine->peek(-1).span.length) - condition_block->span.offset
     };
 
-    machine->no_init = false;
+    machine->no_init = prev_no_init;
 
     return condition_block;
 }

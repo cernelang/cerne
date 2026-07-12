@@ -15,7 +15,7 @@ using enum cerne::TokenTypes;
  * returns true if an error was encountered, false otherwise
  * "token" refers to the identifier of the baseelement
  */
-bool start_param(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne::BasicPathElement>& element) {
+bool start_param(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne::BasicPathElement>& element, bool quiet) {
     // immediately set pure to false since we have a call
     *pure = false;
 
@@ -46,25 +46,28 @@ bool start_param(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne
     // check if we have a ) to close the call
     const auto& end_param = machine->peek();
     if(end_param.type != END_PARAM) {
-        cerne::cerror(
-            machine->file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(end_param.value), end_param.span.line, end_param.span.col),
-            cerne::code_snippet(machine->code_sv, end_param.span, std::format("`{}` is not a valid way to close a call.", *(end_param.value))),
-            end_param.span
-        );
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(end_param.value), end_param.span.line, end_param.span.col),
+                cerne::code_snippet(machine->code_sv, end_param.span, std::format("`{}` is not a valid way to close a call.", *(end_param.value))),
+                end_param.span
+            );
+        }
         machine->errors++;
         return true;
-    } else {
-        // advance past the )
-        machine->advance();
-
-        // create a modifier based on the call data and add it to the element
-        auto modifier = std::make_unique<cerne::Modifier>();
-        modifier->type = cerne::ModifierTypes::CALL;
-        modifier->data = std::move(call_data);
-        element->modifiers.push_back(std::move(modifier));
     }
+
+    // advance past the )
+    machine->advance();
+
+    // create a modifier based on the call data and add it to the element
+    auto modifier = std::make_unique<cerne::Modifier>();
+    modifier->type = cerne::ModifierTypes::CALL;
+    modifier->data = std::move(call_data);
+    element->modifiers.push_back(std::move(modifier));
+
 
     return false;
 }
@@ -72,16 +75,18 @@ bool start_param(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne
 /**
  * returns 1 if there is an error, 2 if the current argument can't be parsed, 0 otherwise
  */
-uint8_t parse_keyed_element(cerne::ParseMachine* machine, std::unique_ptr<cerne::InitializerData>& initializer_data, cerne::Token& token) { 
+uint8_t parse_keyed_element(cerne::ParseMachine* machine, std::unique_ptr<cerne::InitializerData>& initializer_data, cerne::Token& token, bool quiet) { 
     // if our initializer is unkeyed, makes no sense to have a keyed element, so we throw an error
     if(!initializer_data->values.empty() && !initializer_data->is_keyed) {
-        cerne::cerror(
-            machine->file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
-            cerne::code_snippet(machine->code_sv, token.span, std::format("`{}` is not a valid initializer.", *(token.value))),
-            token.span
-        );
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                cerne::code_snippet(machine->code_sv, token.span, std::format("`{}` is not a valid initializer.", *(token.value))),
+                token.span
+            );
+        }
         machine->errors++;
         return 1;
     }
@@ -92,25 +97,29 @@ uint8_t parse_keyed_element(cerne::ParseMachine* machine, std::unique_ptr<cerne:
 
     auto& key = machine->peek();
     if(key.type != IDENTIFIER) {
-        cerne::cerror(
-            machine->file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(key.value), key.span.line, key.span.col),
-            cerne::code_snippet(machine->code_sv, key.span, std::format("`{}` is not a valid token inside of the initializer.", *(key.value))),
-            key.span
-        );
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(key.value), key.span.line, key.span.col),
+                cerne::code_snippet(machine->code_sv, key.span, std::format("`{}` is not a valid token inside of the initializer.", *(key.value))),
+                key.span
+            );
+        }
         machine->errors++;
         return 1;
     }
 
     if(auto& equals = machine->peek(1); equals.type != EQU) {
-        cerne::cerror(
-            machine->file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(equals.value), equals.span.line, equals.span.col),
-            cerne::code_snippet(machine->code_sv, equals.span, std::format("`{}` is not a valid token inside of the initializer.", *(equals.value))),
-            equals.span
-        );
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(equals.value), equals.span.line, equals.span.col),
+                cerne::code_snippet(machine->code_sv, equals.span, std::format("`{}` is not a valid token inside of the initializer.", *(equals.value))),
+                equals.span
+            );
+        }
         machine->errors++;
         return 1;
     }
@@ -137,7 +146,7 @@ uint8_t parse_keyed_element(cerne::ParseMachine* machine, std::unique_ptr<cerne:
  * same thing for start_param and all the other subsequent cases
  * returns true if an error was encountered, false otherwise
  */
-bool start_scope(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne::BasicPathElement>& element) {
+bool start_scope(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne::BasicPathElement>& element, bool quiet) {
     // in this case we also set pure to false since we have an initializer
     *pure = false;
 
@@ -154,7 +163,7 @@ bool start_scope(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne
 
         // keyed
         if(token.type == DOT) {
-            auto keyed_element_state = parse_keyed_element(machine, initializer_data, token);
+            auto keyed_element_state = parse_keyed_element(machine, initializer_data, token, quiet);
             
             // if there was an error, return to the main function to handle it
             if(keyed_element_state == 1) return true;
@@ -173,13 +182,15 @@ bool start_scope(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne
         } else {
             // unkeyed, but we still check if initializer data is keyed since if it is, we need the name of the key to be present
             if(initializer_data->is_keyed) {
-                cerne::cerror(
-                    machine->file_path,
-                    ERR_UNEXPECTED_SYMBOL,
-                    std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
-                    cerne::code_snippet(machine->code_sv, token.span, std::format("`{}` is not a valid initializer.", *(token.value))),
-                    token.span
-                );
+                if(!quiet && !machine->options.flags.contains("quiet")) {
+                    cerne::cerror(
+                        machine->file_path,
+                        ERR_UNEXPECTED_SYMBOL,
+                        std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                        cerne::code_snippet(machine->code_sv, token.span, std::format("`{}` is not a valid initializer.", *(token.value))),
+                        token.span
+                    );
+                }
                 machine->errors++;
                 return true;
             }
@@ -203,13 +214,15 @@ bool start_scope(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne
     auto& end_scope = machine->peek();
 
     if(end_scope.type != END_SCOPE) {
-        cerne::cerror(
-            machine->file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(end_scope.value), end_scope.span.line, end_scope.span.col),
-            cerne::code_snippet(machine->code_sv, end_scope.span, std::format("`{}` is not a valid way to terminate initializers.", *(end_scope.value))),
-            end_scope.span
-        );
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(end_scope.value), end_scope.span.line, end_scope.span.col),
+                cerne::code_snippet(machine->code_sv, end_scope.span, std::format("`{}` is not a valid way to terminate initializers. Expected `}}`", *(end_scope.value))),
+                end_scope.span
+            );
+        }
         machine->errors++;
         return true;
     } else {
@@ -225,9 +238,98 @@ bool start_scope(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne
 }
 
 /**
+ * to fix express/generic ambiguity, we check in advance if it looks like generic arguments
+ * returns true if it does, false otherwise
+ */
+bool is_generic(cerne::ParseMachine* machine) {
+    auto prev_offset = machine->offset;
+    auto prev_errors = machine->errors;
+
+    machine->advance();
+    auto depth = 1;
+    cerne::TokenTypes last{};
+
+    while(machine->offset < machine->list.size() && depth > 0) {
+        auto& current_token = machine->peek();
+
+        switch(current_token.type) {
+            case LESS_THAN: {
+                if(last != IDENTIFIER) {
+                    machine->offset = prev_offset;
+                    machine->errors = prev_errors;
+                    return false;
+                }
+
+                depth++;
+                machine->advance();
+                break;
+            }
+            case GREATER_THAN: {
+                depth--;
+                machine->advance();
+                break;
+            }
+            case RIGHT_SHIFT: {
+                depth-=2;
+                machine->advance();
+                break;
+            }
+            case COMMA: {
+                if(last != IDENTIFIER) {
+                    machine->offset = prev_offset;
+                    machine->errors = prev_errors;
+                    return false;
+                }
+                
+                machine->advance();
+                break;
+            }
+            case DOT:
+            case MEMBER_ACCESS:
+            case IDENTIFIER:
+                last = current_token.type;
+                machine->advance();
+                break;
+
+            default:
+                machine->offset = prev_offset;
+                machine->errors = prev_errors;
+                return false;
+        }
+    }
+
+    if(depth == 0) {
+        // if someone writes "if my_func<T>(x) {}" they most likely mean a generic function call over a complex comparison like (my_func < T) > (x)
+        auto& rhs_begin_token = machine->peek();
+
+        // if there is a nud and we're inside a statement, this is most likely an expression
+        if(machine->inside_stmt && rhs_begin_token.type != START_PARAM) {
+            auto nud = machine->parse_nud(true);
+            if(nud) {
+                machine->offset = prev_offset;
+                machine->errors = prev_errors;
+                return false;
+            } else {
+                machine->offset = prev_offset;
+                machine->errors = prev_errors;
+                return true;
+            }
+        } else {
+            machine->offset = prev_offset;
+            machine->errors = prev_errors;
+            return true;
+        }
+    }
+
+    machine->offset = prev_offset;
+    machine->errors = prev_errors;
+    return false;
+}
+
+/**
  * returns true if there was an error, false otherwise
  */
-bool generics(cerne::ParseMachine* machine, std::unique_ptr<cerne::BasicPathElement>& element) {
+bool generics(cerne::ParseMachine* machine, std::unique_ptr<cerne::BasicPathElement>& element, bool quiet) {
     // initialize generic arguments
     auto generic_args = std::vector<std::unique_ptr<cerne::Path>>();
 
@@ -235,7 +337,7 @@ bool generics(cerne::ParseMachine* machine, std::unique_ptr<cerne::BasicPathElem
     bool stop = false;
 
     while(machine->offset < machine->list.size() && !stop) {
-        auto path = machine->parse_path(true);
+        auto path = machine->parse_path(true, quiet);
         if(!path) {
             // break since we can't parse the current argument
             break;
@@ -253,15 +355,17 @@ bool generics(cerne::ParseMachine* machine, std::unique_ptr<cerne::BasicPathElem
         stop = true;
     }
 
-    // check if generics end in > (if not, it's an error)
-    if(machine->peek().type != GREATER_THAN) {
-        cerne::cerror(
-            machine->file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(machine->peek().value), machine->peek().span.line, machine->peek().span.col),
-            cerne::code_snippet(machine->code_sv, machine->peek().span, std::format("`{}` is not a valid way to terminate generic arguments.", *(machine->peek().value))),
-            machine->peek().span
-        );
+    // check if generics end in > or >> (if not, it's an error) [quick side note - >> is already handled by is_generic for nested generics so it's fine]
+    if(machine->peek().type != GREATER_THAN && machine->peek().type != RIGHT_SHIFT) {
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(machine->peek().value), machine->peek().span.line, machine->peek().span.col),
+                cerne::code_snippet(machine->code_sv, machine->peek().span, std::format("`{}` is not a valid way to terminate generic arguments. Expected `>`", *(machine->peek().value))),
+                machine->peek().span
+            );
+        }
         machine->errors++;
         return true;
     } 
@@ -315,18 +419,22 @@ bool subscript(cerne::ParseMachine* machine, bool* pure, std::unique_ptr<cerne::
  * Elements must have an identifier as their name, and then optionally a call, initializer, generic arguments, or a mix of all of them.
  * The order is important as identifiers MUST come first and then modifiers (calls, initializers, generics) can come in the order necessary.
  */
-std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine* machine, bool* pure, bool* is_type) {
+std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine* machine, bool* pure, bool* is_type, bool quiet) {
     auto element = std::make_unique<cerne::BasicPathElement>();
 
     auto& token = machine->peek();
     if(token.type != IDENTIFIER) {
-        cerne::cerror(
-            machine->file_path, 
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col), 
-            cerne::code_snippet(machine->code_sv, token.span, std::format("`{}` is not a valid path element.", *(token.value))),    
-            token.span
-        );
+
+        if(!quiet && !machine->options.flags.contains("quiet")) {
+            cerne::cerror(
+                machine->file_path, 
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col), 
+                cerne::code_snippet(machine->code_sv, token.span, std::format("`{}` is not a valid path element.", *(token.value))),    
+                token.span
+            );
+        }
+
         machine->errors++;
         return nullptr;
     }
@@ -350,7 +458,7 @@ std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine*
             machine->advance(); // consume the (
 
             // parse the call and add it to the element's modifiers
-            if(start_param(machine, pure, element)) {
+            if(start_param(machine, pure, element, quiet)) {
                 return nullptr;
             }
             
@@ -368,7 +476,7 @@ std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine*
             machine->advance(); // consume the {
 
             // actually parse the initializer and add it to the element's modifiers
-            if(start_scope(machine, pure, element)) {
+            if(start_scope(machine, pure, element, quiet)) {
                 return nullptr;
             }
 
@@ -376,12 +484,12 @@ std::unique_ptr<cerne::BasicPathElement> parse_path_element(cerne::ParseMachine*
             continue;
         }
 
-        // <path, path, ...> (generic arguments)
-        if(token.type == LESS_THAN) {
+        // <path, path, ...> (generic arguments) [quick side note - we need to check if this is generic arguments or expression, if it's a type, it's guaranteed (structurally) to be generic arguments]
+        if(token.type == LESS_THAN && (*is_type || is_generic(machine))) {
             machine->advance(); // consume the <
 
             // parse generics
-            if(generics(machine, element)) {
+            if(generics(machine, element, quiet)) {
                 return nullptr;
             }
 
@@ -438,7 +546,7 @@ std::unique_ptr<cerne::Path> cerne::create_simple_type(const std::string& name, 
  * this means parse_path will stop parsing as soon as it encounters a call or an initializer
  * (stops AFTER the last element of the path)
  */
-std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type) {
+std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type, bool quiet) {
     auto path = std::make_unique<cerne::Path>();
 
     bool pure = true;
@@ -449,7 +557,7 @@ std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type) {
 
     // we parse path element until a path chain stopper is encountered (a token that cannot connect paths, aka a token that is not a member access or a dot)
     while(offset < list.size()) {
-        auto element = parse_path_element(this, &pure, &is_type);
+        auto element = parse_path_element(this, &pure, &is_type, quiet);
 
         if(!element) break;
 
@@ -475,13 +583,16 @@ std::unique_ptr<cerne::Path> cerne::ParseMachine::parse_path(bool is_type) {
     // if the path does not match with the pure path requirement, we throw an error
     if(is_type && !pure) {
         auto& token = peek();
-        cerne::cerror(
-            file_path,
-            ERR_UNEXPECTED_SYMBOL,
-            std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
-            cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid path element.", *(token.value))),
-            token.span
-        );
+
+        if(!quiet && !options.flags.contains("quiet")) {
+            cerne::cerror(
+                file_path,
+                ERR_UNEXPECTED_SYMBOL,
+                std::format("Unexpected token `{}` at {}:{}", *(token.value), token.span.line, token.span.col),
+                cerne::code_snippet(code_sv, token.span, std::format("`{}` is not a valid path element.", *(token.value))),
+                token.span
+            );
+        }
         errors++;
         return nullptr;
     }

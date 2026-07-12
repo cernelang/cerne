@@ -54,6 +54,13 @@ constexpr uint8_t ERR_UNEXPECTED_EOF         = 6;
 constexpr uint8_t ERR_MALFORMED_IMPORT       = 7;
 constexpr uint8_t ERR_ELIF_OUTSIDE_IF        = 8;
 constexpr uint8_t ERR_ELSE_OUTSIDE_IF        = 9;
+constexpr uint8_t ERR_INVALID_LOOP_CONDITION = 10;
+constexpr uint8_t ERR_MISSING_LOOP_BODY      = 11;
+constexpr uint8_t ERR_MISSING_LOOP_VARIABLE  = 12;
+constexpr uint8_t ERR_MISSING_LOOP_CONDITION = 13; // fundamentally different from ERR_INVALID_LOOP_CONDITION
+constexpr uint8_t ERR_MISSING_LOOP_UPDATE    = 14;
+constexpr uint8_t ERR_LOOP_OPEN              = 15;
+constexpr uint8_t ERR_MALFORMED_LOOP         = 16;
 
 // util injection in cerne namespace
 namespace cerne {
@@ -107,7 +114,7 @@ namespace cerne {
     constexpr size_t JSON_INDENT_SIZE = 4;
 
     struct JSON {
-        std::map<std::string, std::variant<std::string, JSON>> properties;
+        std::map<std::string, std::variant<std::string, JSON, bool>> properties;
     };
 
     class JSONBuilder {
@@ -119,8 +126,8 @@ namespace cerne {
             ~JSONBuilder()=default;
 
             std::string build();
-            std::string convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>>& arr);
-            void add_property(const std::string& key, const std::variant<std::string, JSON>& value);
+            std::string convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>, std::vector<bool>>& arr);
+            void add_property(const std::string& key, const std::variant<std::string, JSON, bool>& value);
     };
     
     // misc utils

@@ -29,6 +29,7 @@ namespace cerne {
      */
     namespace commons {
         std::unique_ptr<cerne::Node> var_declaration(const blueprint_arguments& args, bool is_const);
+        std::unique_ptr<cerne::Node> loop(const blueprint_arguments& args, bool is_until);
     }
 
     // function related blueprints
@@ -50,6 +51,11 @@ namespace cerne {
     // package manager and module system blueprints
     std::unique_ptr<cerne::Node> Import(const blueprint_arguments& args);
     std::unique_ptr<cerne::Node> Export(const blueprint_arguments& args);
+
+    // loop blueprints
+    std::unique_ptr<cerne::Node> While(const blueprint_arguments& args);
+    std::unique_ptr<cerne::Node> Until(const blueprint_arguments& args);
+    std::unique_ptr<cerne::Node> For(const blueprint_arguments& args);
 }
 
 #endif

@@ -64,10 +64,10 @@ git clone https://github.com/cernelang/cerne.git
 cd cerne
 
 # now create a build directory 
-mkdir build && cd build
+mkdir build
 
 # build the project
-cmake .. && cmake --build .
+cmake -S . --B build
 
 # now run cerne to check if everything's ok
 ./cerne version
