@@ -14,3 +14,8 @@ if x {
 } else {
     std::print("x is falsy")
 }
+
+const twenty = 20
+if x < twenty {
+    std::print("x is less than 20")
+}

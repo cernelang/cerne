@@ -30,7 +30,7 @@ namespace cerne {
         Signal,
 
         // Misc
-        Object, Function, Space
+        Object, Function
     };
 
     const std::map<std::string, Primitive> primitive_types = {
@@ -48,19 +48,18 @@ namespace cerne {
         {"u64", Primitive::U64},
         {"char", Primitive::Char},
         {"str", Primitive::Str},
-        {"List", Primitive::List},
-        {"Map", Primitive::Map},
+        {"list", Primitive::List},
+        {"map", Primitive::Map},
 
-        {"Signal", Primitive::Signal},
-        {"Object", Primitive::Object},
-        {"Function", Primitive::Function},
-        {"Space", Primitive::Space}
+        {"signal", Primitive::Signal},
+        {"object", Primitive::Object},
+        {"function", Primitive::Function}
     };
 
     const std::map<std::string, Primitive> primitive_compound = {
-        {"List", Primitive::List},
-        {"Map", Primitive::Map},
-        {"Signal", Primitive::Signal}
+        {"list", Primitive::List},
+        {"map", Primitive::Map},
+        {"signal", Primitive::Signal}
     };
 
     /* 

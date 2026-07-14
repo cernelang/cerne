@@ -102,7 +102,7 @@ cerne::JSON path_to_json(const cerne::Path* path) {
 cerne::JSON cerne::Leaf::to_json() {
     cerne::JSON json;
     json.properties["value"] = value ? *value : "";
-    json.properties["is_number"] = std::format("{}", is_number);
+    json.properties["is_number"] = is_number;
     json.properties["type"] = "Leaf";
     json.properties["span"] = span_to_json(span);
     return json;
@@ -146,7 +146,7 @@ cerne::JSON cerne::BinaryExpr::to_json() {
 
 cerne::JSON cerne::Parameter::to_json() {
     cerne::JSON json;
-    json.properties["unpack"] = std::format("{}", unpack);
+    json.properties["unpack"] = unpack;
     json.properties["name"] = name;
     json.properties["name_span"] = span_to_json(name_span);
     json.properties["parameter_type"] = path_to_json(ptype.get());
@@ -190,8 +190,8 @@ cerne::JSON cerne::VarDecl::to_json() {
     cerne::JSON json;
     json.properties["name"] = name;
     json.properties["name_span"] = span_to_json(name_span);
-    json.properties["is_const"] = std::format("{}", is_const);
-    json.properties["uninitialized"] = std::format("{}", uninitialized);
+    json.properties["is_const"] = is_const;
+    json.properties["uninitialized"] = uninitialized;
     json.properties["var_type"] = path_to_json(var_type.get());
     json.properties["value"] = value ? JSONBuilder{value->to_json()}.json : JSON{};
     json.properties["type"] = "VarDecl";
@@ -270,9 +270,9 @@ cerne::JSON cerne::ImportNode::to_json() {
 
     json.properties["package_path_spans"] = JSONBuilder{}.convert_array(package_path_spans_json);
 
-    json.properties["is_path"] = std::format("{}", is_path);
-    json.properties["is_package"] = std::format("{}", is_package);
-    json.properties["is_from_user"] = std::format("{}", is_from_user);
+    json.properties["is_path"] = is_path;
+    json.properties["is_package"] = is_package;
+    json.properties["is_from_user"] = is_from_user;
     json.properties["type"] = "ImportNode";
     json.properties["span"] = span_to_json(span);
     return json;
@@ -317,7 +317,7 @@ cerne::JSON cerne::InitializerData::to_json() {
         values_json.push_back(element->to_json());
     });
 
-    json.properties["is_keyed"] = std::format("{}", is_keyed);
+    json.properties["is_keyed"] = is_keyed;
     json.properties["values"] = JSONBuilder{}.convert_array(values_json);
     return json;
 }

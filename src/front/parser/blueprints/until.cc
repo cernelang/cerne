@@ -1,5 +1,5 @@
 /*
-    Cerne Compiler - const mnemonic blueprint for node construction
+    Cerne Compiler - until mnemonic blueprint for node construction
 
     Copyright (c) 2026 Cerne Project
     SPDX-License-Identifier: LGPL-3.0-only
