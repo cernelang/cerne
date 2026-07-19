@@ -1,5 +1,5 @@
 # Cerne
-![cerne_banner](docs/assets/cerne_banner_large.png)
+![cerne_banner](assets/cerne_banner.png)
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=cernelang_cerne&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=cernelang_cerne)
