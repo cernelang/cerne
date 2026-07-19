@@ -34,14 +34,14 @@ void cerne::cerror(
     // print appropriate error message
     std::cerr << 
     std::format(
-        "{}[{}{}{}]", 
+        "{}[{}{}{}]{}", 
         FG "196;1m", 
         std::format("{}]8;;https://docs.cerne.space/errors#code_{}{}", ESC, errcode, "\x07"),
         std::format("CNE{:04d}", errcode),
-        ESC "]8;;" "\x07" RESET FG "196;1m"
+        ESC "]8;;" "\x07" RESET FG "196;1m", RESET BOLD
     ) << 
     FG "255m" << ':' << ' ' << message << '\n' << '\n' <<
-    FG "219;1m" << src << ':' << span.line << ":" << span.col << FG "255m" << '\n' <<
+    FG "219;1m" << src << ':' << span.line << ":" << span.col << FG "255m" << '\n' << RESET <<
     code_snippet << 
     RESET << 
     extras << 
@@ -50,12 +50,17 @@ void cerne::cerror(
 }
 
 // code snippet & helper
+struct LineWindow {
+    std::string line;
+    size_t start;
+};
+
 /**
  * To prevent printing huge lines, we use col as well to see where the error is and only print
  * a window of the line around the error.
  * Maximum line size displayed is 80 characters.
  */
-std::string get_line(const std::string& code, size_t line, size_t col) {
+LineWindow get_line(const std::string& code, size_t line, size_t col) {
     size_t current_line = 1;
     size_t line_start = 0;
 
@@ -66,7 +71,7 @@ std::string get_line(const std::string& code, size_t line, size_t col) {
     }
 
     // if we reached EOF, return empty string
-    if(line_start >= code.size()) return "";
+    if(line_start >= code.size()) return LineWindow{.line="", .start=0};
 
     // find the end of the line
     size_t line_end = line_start;
@@ -75,7 +80,9 @@ std::string get_line(const std::string& code, size_t line, size_t col) {
     size_t line_length = line_end - line_start;
 
     // now we have the start and end of the line, we can calculate the window around the error
-    size_t window_start = (col > 40) ? std::max(col - 44, (size_t)0) : 0;
+    col = std::min(col, line_length); // ensure col is within the line length
+
+    size_t window_start = (col >= 44) ? col - 44 : 0;
     size_t window_end = std::min(col + 36, line_length);
 
     auto substr = code.substr(line_start + window_start, window_end - window_start);
@@ -88,7 +95,7 @@ std::string get_line(const std::string& code, size_t line, size_t col) {
         substr.insert(0, "... ");
     }
 
-    return substr;
+    return LineWindow{.line=substr,.start=window_start};
 }
 
 std::string_view cerne::code_snippet(const std::string_view& code, cerne::Span span, const std::string_view& under_message) {
@@ -96,19 +103,28 @@ std::string_view cerne::code_snippet(const std::string_view& code, cerne::Span s
     window.clear();
     
     // we first snatch the line of the error 
-    std::string line = get_line(std::string(code), span.line, span.col);
+    LineWindow line_window = get_line(std::string(code), span.line, span.col);
+    std::string line = line_window.line;
+    size_t start = line_window.start;
 
     // line 400 is 3 characters wide for example while line 50000 is 5 characters wide, so depending
     // on line number, the padding will change
     size_t width = std::log10(span.line) + 1;
 
     // print lines
-    window += std::string(width+1, ' ') + FG "255;1m" + '|' + '\n';
-    window += FG "255m" + std::to_string(span.line) + ' ' + '|' + '\t' + std::string(line) + '\n';
-    window += std::string(width+1, ' ') + FG "255;1m" + '|' + '\t' + std::string(((line.size()==80)?4:(span.col%80)), ' ') + FG "196m" + '^' + std::string(std::min(span.length - 1, (size_t)(line.size()-(span.col%40))), '~') + '\n' + RESET;
-    window += std::string(width+1, ' ') + FG "255;1m" + '|' + '\t' + std::string(((line.size()==80)?4:(span.col%80)), ' ') + std::string(under_message) + '\n';
+    window += std::format("{}{}|\n", ce_colors::fggray, std::string(width+1, ' '));
+    window += std::format("{}{} |{}{}\t{}\n{}", ce_colors::fggray, std::to_string(span.line), RESET, ce_colors::fgwhite, line, RESET);
+    window += std::format("{}{}|{}{}\t{}\n", ce_colors::fggray, std::string(width+1, ' '), RESET BOLD, ce_colors::fgwhite, std::string(span.col - start, ' ') + ce_colors::fgred + '^' + std::string(std::min(span.length - 1, (size_t)(line.size()-(span.col%40))), '~') + RESET);
+    window += std::format("{}{}|{}{}\t{}\n{}",ce_colors::fggray, std::string(width+1, ' '), RESET BOLD, ce_colors::fgwhite, std::string(span.col - start, ' ') + std::string(under_message), RESET);
 
     return std::string_view(window);
+}
+
+std::string cerne::oneline_code_snippet(const std::string_view& code, cerne::Span span) {
+    LineWindow line_window = get_line(std::string(code), span.line, span.col);
+    std::string line = line_window.line;
+    std::string window = std::format("{}{}{} |{}{}\t{}{}", RESET, ce_colors::fggray, std::to_string(span.line), RESET, ce_colors::fgwhite, line, RESET);
+    return window;
 }
 
 // log with a time
@@ -126,6 +142,9 @@ void cerne::debug(const std::string_view& message) {
  * this makes cerne code in diagnostics look much better and more readable since you can see the distinction between tokens.
  */
 std::string highlight(const std::string& code) {
+
+
+
     return code; // temporary
 }
 
@@ -141,4 +160,8 @@ std::string cerne::note(const std::string& base_note) {
  */
 std::string cerne::example(const std::string& base_example) {
     return std::format("\n{}{}= Example{}{}: {}{}\n", BOLD, ce_colors::fggreen, RESET BOLD, ce_colors::fgwhite, base_example, RESET);
+}
+
+std::string cerne::help(const std::string& base_note) {
+    return std::format("\n{}{}help{}{}: {}{}\n", BOLD, ce_colors::fgyellow, RESET BOLD, ce_colors::fgwhite, base_note, RESET);
 }

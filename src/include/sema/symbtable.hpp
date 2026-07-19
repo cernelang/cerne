@@ -35,19 +35,42 @@ namespace cerne {
         
         // for diagnostics
         Node* node;
+
+        explicit Entry(
+            const std::string& name, 
+            TypeOfEntry entry_type, 
+            Node* node = nullptr
+        ) : name(name), entry_type(entry_type), node(node) {};
     };
 
-    struct VariableEntry {
-        Entry base_data;
-        std::unique_ptr<Path> type;
+    struct VariableEntry : Entry {
+        Path* type;
         bool is_mutable;
+
+        explicit VariableEntry(
+            const std::string& name, 
+            Path* type, 
+            bool is_mutable, 
+            Node* node = nullptr
+        ) : Entry(name, TypeOfEntry::VARIABLE, node), type(type), is_mutable(is_mutable) {};
     };
 
-    struct FunctionEntry {
-        Entry base_data;
-        std::unique_ptr<Path> return_type;
-        std::vector<std::unique_ptr<Parameter>> parameters;
-        std::vector<std::unique_ptr<FunctionEntry>> overloads = {};
+    using entry_map = std::unordered_map<std::string, std::unique_ptr<Entry>>;
+
+    struct FunctionEntry : Entry {
+        Path* return_type;
+        const std::vector<std::unique_ptr<Parameter>>* parameters;
+        std::vector<std::unique_ptr<FunctionEntry>> overloads{};
+
+        // all entries inside function scope
+        entry_map entries{};
+
+        explicit FunctionEntry(
+            const std::string& name, 
+            Path* return_type, 
+            const std::vector<std::unique_ptr<Parameter>>* parameters, 
+            Node* node = nullptr
+        ) : Entry(name, TypeOfEntry::FUNCTION, node), return_type(return_type), parameters(parameters) {};
     };
 
     struct SEMAScope {
@@ -56,20 +79,28 @@ namespace cerne {
         std::unique_ptr<Entry> parent_entry = nullptr;
 
         // current scope entries
-        std::unordered_map<std::string, std::unique_ptr<Entry>> entries;
+        entry_map entries;
     };
 
     class SymbolTable {
-        std::unique_ptr<AST> ast;
         // stack of scopes, where the first scope is the global scope
         std::vector<std::unique_ptr<SEMAScope>> scopes;
 
         public:
-            explicit SymbolTable(std::unique_ptr<AST> _ast) : ast(std::move(_ast)) {};
+            AST* ast;
+            const char* file_path;
+            size_t errors = 0;
+            std::string_view code_sv;
+
+            explicit SymbolTable(AST* _ast, const char* file_path, const std::string_view& code_sv) : ast(_ast), file_path(file_path), code_sv(code_sv) {};
             ~SymbolTable()=default;
 
+            void collect(const std::vector<std::unique_ptr<Node>>& node_list, SEMAScope* global_scope, FunctionEntry* current_function);
+            void try_fun(entry_map* entries, const std::string& name, std::unique_ptr<FunctionEntry> fun_entry);
+            void try_var(entry_map* entries, const std::string& name, std::unique_ptr<VariableEntry> var_entry);
+
             void build();
-            static SEMAScope make_scope(std::vector<std::unique_ptr<Node>> node_list, SEMAScope* parent_scope = nullptr, Entry* parent_entry = nullptr);
+            void resolve();
     };
 }
 

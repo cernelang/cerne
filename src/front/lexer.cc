@@ -84,325 +84,324 @@ const std::map<std::string, cerne::TokenTypes, std::less<>> compounds = {
     {"...", cerne::TokenTypes::UNPACK}
 };
 
-/* --- SIMPLE LEXER MACHINE --- */
-class LexerMachine {
-    public:
-        std::vector<cerne::Token> tokens;
-        cerne::TokenTypes string_subtype;
-        size_t line = 1;
-        size_t col = 0;
-        size_t offset = 0;
-        bool is_comment = false;
-        bool is_mlc = false;
-        bool is_string = false;
-        bool number_began_in_dot = false;
-        std::string raw_str_content = "";
-        const std::string_view& code;
-        const char* file_path;
-        const cerne::args& options;
+/* --- LEXER MACHINE METHODS --- */
 
-        LexerMachine(const std::string_view& code, const char* file_path, const cerne::args& options) : code(code), file_path(file_path), options(options) {};
-        ~LexerMachine()=default;
+void cerne::LexerMachine::update(char c) {
+    if(c == '\n') {
+        line++;
+        col=0;
+        is_comment=false;
+    } else col++;
+}
 
-        void update(char c) {
-            if(c == '\n') {
-                line++;
-                col=0;
-                is_comment=false;
-            } else col++;
-        }
-        void push(cerne::Token&& token) {
-            tokens.push_back(std::move(token));
-        }
+void cerne::LexerMachine::push(cerne::Token&& token) {
+    tokens.push_back(std::move(token));
+}
 
-        /**
-         * is a comment or not
-         */
-        bool comment(char c, char n) {
-            if(is_mlc) {
-                if(c == '*' && n == '/') {
-                    is_mlc = false;
-                    offset++;
-                    return true;
-                } else return true;
-            } else if(is_comment) return true;
+/**
+ * is a comment or not
+ */
+bool cerne::LexerMachine::comment(char c, char n) {
+    if(is_mlc) {
+        if(c == '*' && n == '/') {
+            is_mlc = false;
+            offset++;
+            return true;
+        } else return true;
+    } else if(is_comment) return true;
 
-            return false;
-        }
+    return false;
+}
 
-        /**
-         * won't track fstring and sstring metadata for now
-         */
-        bool string(char c) {
-            if(is_string) {
-                auto it = symbols.find(c);
-                if(it != symbols.end() && it->second == string_subtype) {
-                    // create token for the string, push it and reset machine's string information for the next string
-                    auto token = cerne::Token(
-                        string_subtype,
-                        std::make_unique<std::string>(raw_str_content),
-                        cerne::Span{
-                            .line=line,
-                            .col=col-raw_str_content.size(),
-                            .offset=offset,
-                            .length=raw_str_content.size()
-                        }
-                    );
-                    push(std::move(token));
-                    is_string = false;
-                    raw_str_content.clear();
-                    raw_str_content.shrink_to_fit();
-                } else raw_str_content += c;
-
-                return true;
-            }
-
-            return false;
-        }
-
-        void word(char c) {
-            // snatch the whole word (loop through ever character next to this one until it's not alnum or an underscore)
-            std::string word = "";
-            size_t len = 1;
-
-            while((isalnum(c) || c == '_') && offset < code.size()) {
-                word += c;
-                update(c);
-                offset++;
-                len++;
-                c = code[offset];
-            }
-
-            // the outer for loop will perform another offset++ after this iteration ends, since it ends at the first non-variable character for word (which could be whitespace or a symbol), the outer offset++ will skip that character, which can be valuable for a statement.
-            offset--;
-            col--;
-            len--;
-
-            // to get the type, we check if the word is a keyword or register and if it is, then we set the type to that
-            auto type = cerne::TokenTypes::IDENTIFIER;
-
-            if(std::ranges::find(cerne::keywords, word) != cerne::keywords.end()) type = cerne::TokenTypes::MNEMONIC;
-            else if(std::ranges::find(cerne::registers, word) != cerne::registers.end()) type = cerne::TokenTypes::REGISTER;
-
-            // now push the token to our machine's token list
+/**
+ * won't track fstring and sstring metadata for now
+ */
+bool cerne::LexerMachine::string(char c) {
+    if(is_string) {
+        auto it = symbols.find(c);
+        if(it != symbols.end() && it->second == string_subtype) {
+            // create token for the string, push it and reset machine's string information for the next string
             auto token = cerne::Token(
-                type,
-                std::make_unique<std::string>(word),
+                string_subtype,
+                std::make_unique<std::string>(raw_str_content),
                 cerne::Span{
                     .line=line,
-                    .col=(col >= len ? col-len : 0),
-                    .offset=(offset >= len ? offset-len : 0),
-                    .length=len
+                    .col=col-raw_str_content.size(),
+                    .offset=offset,
+                    .length=raw_str_content.size()
                 }
             );
             push(std::move(token));
+            is_string = false;
+            raw_str_content.clear();
+            raw_str_content.shrink_to_fit();
+        } else raw_str_content += c;
+
+        return true;
+    }
+
+    return false;
+}
+
+void cerne::LexerMachine::word(char c) {
+    // snatch the whole word (loop through ever character next to this one until it's not alnum or an underscore)
+    std::string word = "";
+    size_t len = 1;
+
+    while((isalnum(c) || c == '_') && offset < code.size()) {
+        word += c;
+        update(c);
+        offset++;
+        len++;
+        c = code[offset];
+    }
+
+    // the outer for loop will perform another offset++ after this iteration ends, since it ends at the first non-variable character for word (which could be whitespace or a symbol), the outer offset++ will skip that character, which can be valuable for a statement.
+    offset--;
+    col--;
+    len--;
+
+    // to get the type, we check if the word is a keyword or register and if it is, then we set the type to that
+    auto type = cerne::TokenTypes::IDENTIFIER;
+
+    if(std::ranges::find(cerne::keywords, word) != cerne::keywords.end()) type = cerne::TokenTypes::MNEMONIC;
+    else if(std::ranges::find(cerne::registers, word) != cerne::registers.end()) type = cerne::TokenTypes::REGISTER;
+
+    // now push the token to our machine's token list
+    auto token = cerne::Token(
+        type,
+        std::make_unique<std::string>(word),
+        cerne::Span{
+            .line=line,
+            .col=(col >= len ? col-len : 0),
+            .offset=(offset >= len ? offset-len : 0),
+            .length=len
+        }
+    );
+    push(std::move(token));
+}
+
+/**
+ * numbers can come in various formats, mainly:
+ * 1000
+ * 1,000.0
+ * 1e3
+ * 0x3e8
+ * among others
+ */
+void cerne::LexerMachine::number(char c) {
+    // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
+    std::string number = number_began_in_dot ? "0." : ""; // we put a 0. so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
+    size_t len = 1;
+    bool error = false;
+    size_t error_at = 0;
+    uint8_t dots = number_began_in_dot;
+
+    // reset to false
+    number_began_in_dot = false;
+
+    while((isdigit(c) || c == ',' || c == '.') && offset < code.size()) {
+        // if there already is a dot, we're probably dealing with a range, so break loop
+        if(c == '.' && (number.find('.') != std::string::npos)) {
+            // it's a range
+            if(number[number.size()-1] == '.' && dots <= 2) {
+                number.pop_back();
+                error=false;
+                // decrement offset because we're trying to parse the range, which requires us to go back to the first dot
+                offset--;
+                break;
+            } 
+
+            // it's an error! too many dots in a number
+            else if(!error) {
+                error=true;
+                error_at=len-1;
+            }
         }
 
-        void number(char c) {
-            // for numbers, it's actually more convenient to store them as strings as well instead of immediately converting to long/double
-            std::string number = number_began_in_dot ? "0." : ""; // we put a 0. so that, in the future, when parsing this number, we correctly parse .5 as 0.5 instead
-            size_t len = 1;
-            bool error = false;
-            size_t error_at = 0;
-            uint8_t dots = number_began_in_dot;
+        // increment amount of dots
+        if(c == '.') dots++;
 
-            // reset to false
-            number_began_in_dot = false;
+        // , are just for style, they don't add any additional information to the number
+        if(c != ',') number += c;
+        update(c);
+        offset++;
+        len++;
+        c = code[offset];
+    }
 
-            while((isdigit(c) || c == ',' || c == '.') && offset < code.size()) {
-                // if there already is a dot, we're probably dealing with a range, so break loop
-                if(c == '.' && (number.find('.') != std::string::npos)) {
-                    // it's a range
-                    if(number[number.size()-1] == '.' && dots <= 2) {
-                        number.pop_back();
-                        error=false;
-                        // decrement offset because we're trying to parse the range, which requires us to go back to the first dot
-                        offset--;
-                        break;
-                    } 
+    // realign offset (explanation on another comment in the word check (word() function), since the number loop mechanism is the same)
+    offset--;
+    col--;
+    len--;
 
-                    // it's an error! too many dots in a number
-                    else if(!error) {
-                        error=true;
-                        error_at=len-1;
-                    }
-                }
+    const auto& span = cerne::Span{
+        .line=line,
+        .col=(col >= len ? col-len : 0),
+        .offset=(offset >= len ? offset-len : 0),
+        .length=len
+    };
 
-                // increment amount of dots
-                if(c == '.') dots++;
+    // display dots error message
+    if(error) {
+        const auto& err_at_span = cerne::Span{.line=span.line,.col=span.col+error_at,.offset=span.offset+error_at,.length=span.length};
 
-                // , are just for style, they don't add any additional information to the number
-                if(c != ',') number += c;
-                update(c);
-                offset++;
-                len++;
-                c = code[offset];
-            }
+        cerne::cerror(
+            file_path,
+            ERR_TOO_MANY_DOTS,
+            "Too many dots in number",
+            cerne::code_snippet(
+                code,
+                err_at_span,
+                std::format("`{}` is not a valid number", number.substr(0, 32))
+            ),
+            err_at_span
+        );
+        return;
+    }
 
-            // realign offset (explanation on another comment in the word check (word() function), since the number loop mechanism is the same)
-            offset--;
-            col--;
-            len--;
+    // push number token to the machine's token list
+    auto token = cerne::Token(
+        cerne::TokenTypes::NUMBER,
+        std::make_unique<std::string>(number),
+        span
+    );
 
-            const auto& span = cerne::Span{
+    push(std::move(token));
+}
+
+/**
+ * triple character symbols
+ */
+void cerne::LexerMachine::compound(const std::string& possible_compound) {
+    // update to over after the last character of the compound
+    offset += 2;
+    
+    // get compound type and then
+    // check if the compound type is unpack and after unpack is a number, since it would mean it's a number range number (.5 is a number, 0...5 is a range between 0 and 0.5)
+    if(auto compound_type = compounds.at(possible_compound); !(compound_type == cerne::TokenTypes::UNPACK && (offset+1 < code.length()) && isdigit(code[offset + 1]))) {
+
+        auto token = cerne::Token(
+            compound_type,
+            std::make_unique<std::string>(possible_compound),
+            cerne::Span{
                 .line=line,
-                .col=(col >= len ? col-len : 0),
-                .offset=(offset >= len ? offset-len : 0),
-                .length=len
-            };
-
-            // display dots error message
-            if(error) {
-                const auto& err_at_span = cerne::Span{.line=span.line,.col=span.col+error_at,.offset=span.offset+error_at,.length=span.length};
-
-                cerne::cerror(
-                    file_path,
-                    ERR_TOO_MANY_DOTS,
-                    "Too many dots in number",
-                    cerne::code_snippet(
-                        code,
-                        err_at_span,
-                        std::format("`{}` is not a valid number", number.substr(0, 32))
-                    ),
-                    err_at_span
-                );
-                return;
+                .col=(col >= 3 ? col-3 : 0),
+                .offset=(offset >= 3 ? offset-3 : 0),
+                .length=3
             }
+        );
+        
+        // push compound and skip over the third character as well
+        push(std::move(token));
+        return;
+        
+    }
 
-            // push number token to the machine's token list
-            auto token = cerne::Token(
-                cerne::TokenTypes::NUMBER,
-                std::make_unique<std::string>(number),
-                span
-            );
-
-            push(std::move(token));
+    // if the condition above is not met, it's definitely a number range number situation
+    auto range = cerne::Token(
+        cerne::TokenTypes::RANGE,
+        std::make_unique<std::string>(possible_compound),
+        cerne::Span{
+            .line=line,
+            .col=(col >= 3 ? col-3 : 0),
+            .offset=(offset >= 3 ? offset-3 : 0),
+            .length=3
         }
+    );
 
-        void compound(const std::string& possible_compound) {
-            // update to over after the last character of the compound
-            offset += 2;
-            
-            // get compound type and then
-            // check if the compound type is unpack and after unpack is a number, since it would mean it's a number range number (.5 is a number, 0...5 is a range between 0 and 0.5)
-            if(auto compound_type = compounds.at(possible_compound); !(compound_type == cerne::TokenTypes::UNPACK && (offset+1 < code.length()) && isdigit(code[offset + 1]))) {
+    // set number_began_in_dot to true and reset offset back so number parses the first dot correctly
+    number_began_in_dot = true;
+    push(std::move(range));
+    return;
+}
 
-                auto token = cerne::Token(
-                    compound_type,
-                    std::make_unique<std::string>(possible_compound),
+/**
+ * double character symbols
+ */
+void cerne::LexerMachine::conjecture(const std::string& possible_conjecture) {
+    // already update the offset to skip the next character since the next character is part of the conjecture
+    offset++;
+
+    // get the conjecture type and in case it's a comment, set the respective comment type to true in the machine
+    auto conjecture_type = conjectures.at(possible_conjecture);
+    switch(conjecture_type) {
+        // one liner
+        case cerne::TokenTypes::START_COMMENT:
+            is_comment = true;
+            break;
+        
+            // multiple line
+        case cerne::TokenTypes::START_MLC:
+            is_mlc = true;
+            break;
+
+        // not a comment? push the token for the conjecture
+        default:
+            auto token = cerne::Token(
+                conjecture_type,
+                std::make_unique<std::string>(possible_conjecture),
+                cerne::Span{
+                    .line=line,
+                    .col=(col >= 1 ? col-1 : 0),
+                    .offset=(offset >= 1 ? offset-1 : 0),
+                    .length=2
+                }
+            );
+            push(std::move(token));
+    }
+}
+
+/**
+ * single character symbols
+ */
+void cerne::LexerMachine::symbol(char c, char n) {
+    auto symbol_type = symbols.at(c);
+
+    switch(symbol_type) {
+        // activate string collection (with subtype for metadata)
+        case TokenTypes::STRING:
+        case TokenTypes::FSTRING:
+        case TokenTypes::SSTRING:
+            is_string = true;
+            string_subtype = symbol_type;
+            break;
+
+        case TokenTypes::DOT:
+            // if next is a number, it's a literal like .5
+            if(isdigit(n)) {
+                number_began_in_dot = true;
+            } else {
+                auto dot = cerne::Token(
+                    symbol_type,
+                    std::make_unique<std::string>(std::string{c}),
                     cerne::Span{
                         .line=line,
-                        .col=(col >= 3 ? col-3 : 0),
-                        .offset=(offset >= 3 ? offset-3 : 0),
-                        .length=3
+                        .col=(col >= 1 ? col-1 : 0),
+                        .offset=(offset >= 1 ? offset-1 : 0),
+                        .length=1
                     }
                 );
-                
-                // push compound and skip over the third character as well
-                push(std::move(token));
-                return;
-                
+                push(std::move(dot));
             }
 
-            // if the condition above is not met, it's definitely a number range number situation
-            auto range = cerne::Token(
-                cerne::TokenTypes::RANGE,
-                std::make_unique<std::string>(possible_compound),
+            break;  // we just break and let number handle it naturally, since the dot is part of the number
+
+        default:
+            // for any other symbol, just push to the token list
+            auto token = cerne::Token(
+                symbol_type,
+                std::make_unique<std::string>(std::string{c}),
                 cerne::Span{
                     .line=line,
-                    .col=(col >= 3 ? col-3 : 0),
-                    .offset=(offset >= 3 ? offset-3 : 0),
-                    .length=3
+                    .col=(col >= 1 ? col-1 : 0),
+                    .offset=(offset >= 1 ? offset-1 : 0),
+                    .length=1
                 }
             );
-
-            // set number_began_in_dot to true and reset offset back so number parses the first dot correctly
-            number_began_in_dot = true;
-            push(std::move(range));
-            return;
-        }
-
-        void conjecture(const std::string& possible_conjecture) {
-            // already update the offset to skip the next character since the next character is part of the conjecture
-            offset++;
-
-            // get the conjecture type and in case it's a comment, set the respective comment type to true in the machine
-            auto conjecture_type = conjectures.at(possible_conjecture);
-            switch(conjecture_type) {
-                // one liner
-                case cerne::TokenTypes::START_COMMENT:
-                    is_comment = true;
-                    break;
-                
-                    // multiple line
-                case cerne::TokenTypes::START_MLC:
-                    is_mlc = true;
-                    break;
-
-                // not a comment? push the token for the conjecture
-                default:
-                    auto token = cerne::Token(
-                        conjecture_type,
-                        std::make_unique<std::string>(possible_conjecture),
-                        cerne::Span{
-                            .line=line,
-                            .col=(col >= 1 ? col-1 : 0),
-                            .offset=(offset >= 1 ? offset-1 : 0),
-                            .length=2
-                        }
-                    );
-                    push(std::move(token));
-            }
-        }
-
-        void symbol(char c, char n) {
-            auto symbol_type = symbols.at(c);
-
-            switch(symbol_type) {
-                // activate string collection (with subtype for metadata)
-                case cerne::TokenTypes::STRING:
-                case cerne::TokenTypes::FSTRING:
-                case cerne::TokenTypes::SSTRING:
-                    is_string = true;
-                    string_subtype = symbol_type;
-                    break;
-
-                case cerne::TokenTypes::DOT:
-                    // if next is a number, it's a literal like .5
-                    if(isdigit(n)) {
-                        number_began_in_dot = true;
-                    } else {
-                        auto dot = cerne::Token(
-                            symbol_type,
-                            std::make_unique<std::string>(std::string{c}),
-                            cerne::Span{
-                                .line=line,
-                                .col=(col >= 1 ? col-1 : 0),
-                                .offset=(offset >= 1 ? offset-1 : 0),
-                                .length=1
-                            }
-                        );
-                        push(std::move(dot));
-                    }
-
-                    break;  // we just break and let number handle it naturally, since the dot is part of the number
-
-                default:
-                    // for any other symbol, just push to the token list
-                    auto token = cerne::Token(
-                        symbol_type,
-                        std::make_unique<std::string>(std::string{c}),
-                        cerne::Span{
-                            .line=line,
-                            .col=(col >= 1 ? col-1 : 0),
-                            .offset=(offset >= 1 ? offset-1 : 0),
-                            .length=1
-                        }
-                    );
-                    push(std::move(token));
-            }
-        }
-};
+            push(std::move(token));
+    }
+}
 
 /**
  * Goes through each character and converts into it's appropriate token.

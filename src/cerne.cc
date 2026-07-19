@@ -10,7 +10,7 @@
 #include "include/cerne.hpp"
 
 /**
- * spearate utility to check ast print conditions
+ * separate utility to check ast print conditions
  */
 void check_ast_print(const cerne::args& args, const cerne::AST* ast, bool error = false) {
     // check for print/dump flags and their values (to see if it's exclusively for AST)
@@ -54,12 +54,19 @@ void compile(const cerne::args& args, const std::string& file) {
         cerne::debug(std::format("Nodes -> {}", ast->root->node_list.size()));
     }
 
+    // begin SEMA now
+    auto symbtable = std::make_unique<cerne::SymbolTable>(ast.get(), file_cstr, code_sv);
+    symbtable->build();
+
+    // after going through symbol table construction of sema, check for errors
+    if(ast->errors > 0) {
+        check_ast_print(args, ast.get(), true);
+        cerne::error(file_cstr, std::format("Compilation failed with {}{}{} error{}", FG "196m", ast->errors, FG "255m", ((ast->errors >= 2)?"s!":"!")));
+        return;
+    }
+
     // ast diagnostics
     check_ast_print(args, ast.get());
-
-    // begin SEMA now
-    auto symbtable = std::make_unique<cerne::SymbolTable>(std::move(ast));
-    symbtable->build();
 }
 
 /**

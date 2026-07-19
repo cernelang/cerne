@@ -184,6 +184,10 @@ namespace cerne {
             const std::string& name = "",
             const Span& name_span = {}
         ) : Node(NodeType::Parameter, s), unpack(u), name(name), name_span(name_span) {};
+
+        inline bool operator==(const auto& a) const {
+            return ((unpack == a.unpack) && (name == a.name));
+        }
         
         JSON to_json() override;
     };

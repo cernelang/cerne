@@ -265,6 +265,40 @@ namespace cerne {
 
     using tokenlist = std::vector<Token>;
 
+    
+    class LexerMachine {
+        public:
+            std::vector<cerne::Token> tokens;
+            cerne::TokenTypes string_subtype;
+            size_t line = 1;
+            size_t col = 0;
+            size_t offset = 0;
+            bool is_comment = false;
+            bool is_mlc = false;
+            bool is_string = false;
+            bool number_began_in_dot = false;
+            std::string raw_str_content = "";
+            const std::string_view& code;
+            const char* file_path;
+            const cerne::args& options;
+
+            LexerMachine(const std::string_view& code, const char* file_path, const cerne::args& options) : code(code), file_path(file_path), options(options) {};
+            ~LexerMachine()=default;
+
+            // utilities with the tokenlist and position updates
+            void update(char c);
+            void push(cerne::Token&& token);
+
+            // actual tokens themselves
+            bool comment(char c, char n);
+            bool string(char c);
+            void word(char c);
+            void number(char c);
+            void compound(const std::string& possible_compound);
+            void conjecture(const std::string& possible_conjecture);
+            void symbol(char c, char n);
+    };
+
     tokenlist lexer(const std::string_view& code, const char* file_path, const args& options);
 }
 

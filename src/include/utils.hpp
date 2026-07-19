@@ -28,6 +28,9 @@
 #include<memory>
 #include<cmath>
 
+// cerne
+#include "errors.hpp"
+
 // ansii escape codes for styling + signature
 #define ESC         "\x1b"
 #define FG          ESC "[38;5;"
@@ -40,27 +43,13 @@
 struct ce_colors {
     static constexpr const char* fgblue     = FG "75m";
     static constexpr const char* fgwhite    = FG "255m";
+    static constexpr const char* fggray     = FG "248m";
     static constexpr const char* fggreen    = FG "120m";
     static constexpr const char* fgred      = FG "196m";
+    static constexpr const char* fgyellow   = FG "220m";
 };
 
 // error codes
-constexpr uint8_t ERR_UNEXPECTED_SYMBOL      = 1;
-constexpr uint8_t ERR_TOO_MANY_DOTS          = 2;
-constexpr uint8_t ERR_UNEXPECTED_TOKEN       = 3;
-constexpr uint8_t ERR_UNKNOWN_KEYWORD        = 4;
-constexpr uint8_t ERR_OPEN_SCOPE             = 5;
-constexpr uint8_t ERR_UNEXPECTED_EOF         = 6;
-constexpr uint8_t ERR_MALFORMED_IMPORT       = 7;
-constexpr uint8_t ERR_ELIF_OUTSIDE_IF        = 8;
-constexpr uint8_t ERR_ELSE_OUTSIDE_IF        = 9;
-constexpr uint8_t ERR_INVALID_LOOP_CONDITION = 10;
-constexpr uint8_t ERR_MISSING_LOOP_BODY      = 11;
-constexpr uint8_t ERR_MISSING_LOOP_VARIABLE  = 12;
-constexpr uint8_t ERR_MISSING_LOOP_CONDITION = 13; // fundamentally different from ERR_INVALID_LOOP_CONDITION
-constexpr uint8_t ERR_MISSING_LOOP_UPDATE    = 14;
-constexpr uint8_t ERR_LOOP_OPEN              = 15;
-constexpr uint8_t ERR_MALFORMED_LOOP         = 16;
 
 // util injection in cerne namespace
 namespace cerne {
@@ -86,12 +75,14 @@ namespace cerne {
 
     // Diagnostics
     std::string_view code_snippet(const std::string_view& code, Span span, const std::string_view& under_message = "");
+    std::string oneline_code_snippet(const std::string_view& code, Span span);
     void error(const char* where, const std::string& message);
     void cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const Span& span, const std::string_view& extras = "");
     void tlog(double time, const std::string& message);
     void debug(const std::string_view& message);
     std::string note(const std::string& base_note);
     std::string example(const std::string& base_example);
+    std::string help(const std::string& base_note);
 
     // CLI tooling
     class CLI {

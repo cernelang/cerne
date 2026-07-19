@@ -15,4 +15,4 @@ Below are the Licenses applicable to each [component](#important-notice)'s contr
 Please make sure to place your contributions in the correct directory depending on their type, concretely:
 - **Compiler Contributions**: `./src/` (which uses the [LGPL-3.0](LICENSE) license)
 - **Standard Library Contributions**: `./stdlib/` (which uses the [Apache 2.0](stdlib/LICENSE) license)
-- **Specification & Documentation Contributions**: `./docs/` (which uses the [CC BY-SA 4.0](docs/LICENSE) license)
+- **Specification & Documentation Contributions**: `./docs/` (which uses the CC BY-SA 4.0 license)

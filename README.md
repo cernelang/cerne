@@ -67,17 +67,23 @@ cd cerne
 mkdir build
 
 # build the project
-cmake -S . --B build
+cmake -S . -B build 
+cd build
+cmake --build .
 
 # now run cerne to check if everything's ok
 ./cerne version
+```
+one-line version:
+```bash
+git clone https://github.com/cernelang/cerne.git && cd cerne && mkdir build && cmake -S . -B build && cd build && cmake --build . && ./cerne version
 ```
 
 ## License
 The Cerne Project uses multiple licenses:
 - **Compiler**: Licensed under the [LGPL-3.0 license](LICENSE)
 - **Standard Library**: Licensed under the [Apache 2.0 license](stdlib/LICENSE)
-- **Specification and Documentation**: Licensed under the [CC BY-SA 4.0 License](docs/LICENSE)
+- **Specification and Documentation**: Licensed under the CC BY-SA 4.0 License
 
 Copyright © 2026 Cerne Project
 

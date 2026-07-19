@@ -1,0 +1,2 @@
+let var1 = 10
+let var1 = 20 // should fail since var1 was already defined
