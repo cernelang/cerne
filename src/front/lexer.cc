@@ -257,6 +257,7 @@ void cerne::LexerMachine::number(char c) {
             ),
             err_at_span
         );
+        errors++;
         return;
     }
 
@@ -406,7 +407,7 @@ void cerne::LexerMachine::symbol(char c, char n) {
 /**
  * Goes through each character and converts into it's appropriate token.
  */
-std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char* file_path, const cerne::args& options) {
+cerne::LexerReturn cerne::lexer(const std::string_view& code, const char* file_path, const cerne::args& options) {
     auto machine = std::make_unique<LexerMachine>(code, file_path, options);
 
     for(; machine->offset < code.size(); machine->offset++) {
@@ -466,12 +467,14 @@ std::vector<cerne::Token> cerne::lexer(const std::string_view& code, const char*
                     cerne::code_snippet(code, _cerr_span, "Unexpected symbol here"),
                     _cerr_span
                 );
-                return {};
+                machine->errors++;
+                return {{}, machine->errors};
             }
         }
+
+        if(machine->errors > 0) return {{}, machine->errors};
     }
 
-    // Move tokens out of the unique_ptr to avoid trying to copy non-copyable Token structs
-    auto tokens = std::move(machine->tokens);
-    return tokens;
+    // move machine and return it
+    return LexerReturn{std::move(machine->tokens), machine->errors};
 }

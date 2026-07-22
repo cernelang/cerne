@@ -27,9 +27,13 @@
 #include<string_view>
 #include<memory>
 #include<cmath>
+#include<thread>
+#include<future>
+#include<atomic>
 
 // cerne
 #include "errors.hpp"
+
 
 // ansii escape codes for styling + signature
 #define ESC         "\x1b"
@@ -37,19 +41,38 @@
 #define BG          ESC "[48;5;"
 #define RESET       ESC "[0m"
 #define BOLD        ESC "[1m"
+#define UNDERLINE   ESC "[4m"
 #define SIGNATURE   "[cerne]"
+
 
 // color palette
 struct ce_colors {
-    static constexpr const char* fgblue     = FG "75m";
+    // foregrounds
+    static constexpr const char* fglblue    = FG "159m";
+    static constexpr const char* fgblue     = FG "81m";
     static constexpr const char* fgwhite    = FG "255m";
     static constexpr const char* fggray     = FG "248m";
     static constexpr const char* fggreen    = FG "120m";
     static constexpr const char* fgred      = FG "196m";
+    static constexpr const char* fgpink     = FG "219m";
     static constexpr const char* fgyellow   = FG "220m";
+
+    // backgrounds
+    static constexpr const char* bgblack    = BG "0m";
+    static constexpr const char* bgwhite    = BG "255m";
+    static constexpr const char* bgpink     = BG "219m";
 };
 
-// error codes
+
+// cerne version update comes here for now
+struct Version {
+    int alpha;
+    int major;
+    int minor;
+};
+
+constexpr Version CERNE_VERSION{0, 3, 0};
+
 
 // util injection in cerne namespace
 namespace cerne {
@@ -74,14 +97,63 @@ namespace cerne {
     
 
     // Diagnostics
-    std::string_view code_snippet(const std::string_view& code, Span span, const std::string_view& under_message = "");
+
+    /**
+     * Due to cerne's way of diagnostics, we need to store the errors (each error is a CERROR struct) in a vector and THEN print them all at once
+     */
+    struct CERROR {
+        std::string src;
+        size_t errcode;
+        Span span;
+
+        // has to be string since they need to own the object
+        std::string message;
+        std::string code_snippet;
+        std::string extras;
+    };
+
+    std::string cerr_to_msg(const CERROR& error);
+
+    class DEngine {
+        std::vector<CERROR> errors;
+
+        public:
+            DEngine()=default;
+            ~DEngine()=default;
+
+            void add_error(const CERROR& error);
+            void print_errors();
+            static void print_errors(const std::vector<CERROR>& errors);
+            std::vector<CERROR> get() { return errors; };
+            void clear() { errors.clear(); };
+    };
+
+    class DebugEngine {
+        std::vector<std::string> messages;
+
+        public:
+            DebugEngine()=default;
+            ~DebugEngine()=default;
+
+            void add_message(const std::string& message);
+            static void print_messages(const std::vector<std::string>& messages);
+            std::vector<std::string> get() { return messages; };
+            void clear() { messages.clear(); };
+    };
+
+    // this is actually really cool because you need extern for this case since you need other files to access this variable that is initialized in the compilation loop and thread_local for thread-safety reasons
+    extern thread_local DEngine* diag_engine;
+
+    // same for debug
+    extern thread_local DebugEngine* debug_engine;
+
+    // helpers
+    std::string code_snippet(const std::string_view& code, Span span, const std::string_view& under_message = "");
     std::string oneline_code_snippet(const std::string_view& code, Span span);
     void error(const char* where, const std::string& message);
     void cerror(const char* src, const size_t& errcode, const std::string_view& message, const std::string_view& code_snippet, const Span& span, const std::string_view& extras = "");
     void tlog(double time, const std::string& message);
     void debug(const std::string_view& message);
-    std::string note(const std::string& base_note);
-    std::string example(const std::string& base_example);
     std::string help(const std::string& base_note);
 
     // CLI tooling
@@ -105,7 +177,7 @@ namespace cerne {
     constexpr size_t JSON_INDENT_SIZE = 4;
 
     struct JSON {
-        std::map<std::string, std::variant<std::string, JSON, bool>> properties;
+        std::map<std::string, std::variant<std::string, JSON, bool, size_t>> properties;
     };
 
     class JSONBuilder {
@@ -117,8 +189,8 @@ namespace cerne {
             ~JSONBuilder()=default;
 
             std::string build();
-            std::string convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>, std::vector<bool>>& arr);
-            void add_property(const std::string& key, const std::variant<std::string, JSON, bool>& value);
+            std::string convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>, std::vector<bool>, std::vector<size_t>>& arr);
+            void add_property(const std::string& key, const std::variant<std::string, JSON, bool, size_t>& value);
     };
     
     // misc utils

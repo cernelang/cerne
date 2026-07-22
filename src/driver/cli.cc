@@ -104,31 +104,32 @@ void cerne::CLI::event(const std::string& type, cerne::callback fnc) const {
  * or just want to know more about the compiler in general.
  */
 void cerne::CLI::help() const {
-    std::string logo = R"raw(
- ██████╗███████╗██████╗ ███╗   ██╗███████╗
-██╔════╝██╔════╝██╔══██╗████╗  ██║██╔════╝
-██║     █████╗  ██████╔╝██╔██╗ ██║█████╗  
-██║     ██╔══╝  ██╔══██╗██║╚██╗██║██╔══╝  
-╚██████╗███████╗██║  ██║██║ ╚████║███████╗
- ╚═════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝
-)raw";
-
-    std::cout << FG "255m" << logo << 
-
-    "\n\n" <<
+    // first line
+    std::cout << BOLD << ce_colors::fggreen << "🌱 Cerne " << RESET << BOLD << ce_colors::fgwhite << "ー v" << CERNE_VERSION.alpha << "." << CERNE_VERSION.major << "." << CERNE_VERSION.minor << "\n" <<
+    BOLD << ce_colors::fgwhite << "   Welcome to Cerne! Please look below to see all commands, flags and how to use them for your purpose.\n\n" << RESET << // 3 spaces to line up with the emoji
     
-    "Welcome to Cerne!\n\n" << 
     // command usage just in case the user doesn't know how to use the CLI or just wants a reminder
-    
-    FG "218;4;1m" << "Command Usage\n" << ESC "[0m" 
-    FG "223;24m" << "> " << FG "189m" << "cerne " << FG "255m" << "<command> [flags] [files]\n\n" <<
+    BOLD << ce_colors::fgblue << "◆ USAGE" << BOLD << ce_colors::fgwhite << ":\n" << RESET <<
+    "├─\t" << BOLD << ce_colors::fggreen << "cerne " << RESET << BOLD << ce_colors::fgwhite << "<command> [options]\n" <<
+    "└─\t" << BOLD << ce_colors::fggreen << "cerne " << RESET << BOLD << ce_colors::fgwhite << "<files> [flags]\n\n" <<
     
     // command list in the help message
-    FG "121;4;1m" << "Available Commands\n" << ESC "[0m" 
-    FG "223;24m" << "> " << FG "195m" << "help" << FG "255m" << " - shows this message\n" <<
-    FG "223;24m" << "> " << FG "195m" << "version" << FG "255m" << " - shows the current version of the compiler\n\n" <<
-    
-    // signature from me (kashi [quick side note - this is an alias, not my real name]) and a link to the website
-    FG "153;1m" << "Created by Kashi" << FG "237m" << " | " << FG "122;1m" << "https://cerne.space" <<
+    BOLD << ce_colors::fgblue << "◆ COMMANDS" << BOLD << ce_colors::fgwhite << ":\n" << RESET <<
+    "├─\t" << BOLD << ce_colors::fgwhite << "help" << RESET<< ce_colors::fgwhite << "\t\t\t shows this message\n" <<
+    "└─\t" << BOLD << ce_colors::fgwhite << "version" << RESET<< ce_colors::fgwhite << "\t\t\t shows the current version of the compiler\n\n" <<
+
+    // possible flags
+    BOLD << ce_colors::fgblue << "◆ FLAGS" << BOLD << ce_colors::fgwhite << ":\n" << RESET <<
+    "├─\t" << ce_colors::fgwhite << "-h, --help" << RESET << ce_colors::fgwhite << "\t\t shows this message\n" <<
+    "├─\t" << ce_colors::fgwhite << "-v, --version" << RESET << ce_colors::fgwhite << "\t\t shows the current version of the compiler\n" <<
+    "├─\t" << ce_colors::fgwhite << "--debug" << RESET << ce_colors::fgwhite << "\t\t\t shows debug information\n" <<
+    "├─\t" << ce_colors::fgwhite << "--dump=<option>" << RESET << ce_colors::fgwhite << "\t\t dumps the specified option (options: " << ce_colors::bgblack << "ast" << RESET << ce_colors::fgwhite << ")\n" <<
+    "├─\t" << ce_colors::fgwhite << "--print=<option>" << RESET << ce_colors::fgwhite << "\t prints the specified option (options: " << ce_colors::bgblack << "ast" << RESET << ce_colors::fgwhite << ")\n" <<
+    "└─\t" << ce_colors::fgwhite << "--profile" << RESET << ce_colors::fgwhite << "\t\t shows profiling information (how long each phase took)\n\n" <<
+
+    // little command tip
+    BOLD << ce_colors::fgwhite << "Tip" << RESET << ce_colors::fgwhite << ": run '" << ce_colors::bgblack << "cerne help <feature>" << RESET << ce_colors::fgwhite << "' for feature-specific information!\n\n" << RESET <<
+    BOLD << ce_colors::fgblue << "Other Information" << RESET << ce_colors::fgwhite << ": https://docs.cerne.run \n" <<
+    BOLD << ce_colors::fgwhite << "Copyright (c) 2026 Cerne Project" <<
     RESET << std::endl;
 }

@@ -268,11 +268,12 @@ namespace cerne {
     
     class LexerMachine {
         public:
-            std::vector<cerne::Token> tokens;
+            tokenlist tokens;
             cerne::TokenTypes string_subtype;
             size_t line = 1;
             size_t col = 0;
             size_t offset = 0;
+            size_t errors = 0;
             bool is_comment = false;
             bool is_mlc = false;
             bool is_string = false;
@@ -299,7 +300,12 @@ namespace cerne {
             void symbol(char c, char n);
     };
 
-    tokenlist lexer(const std::string_view& code, const char* file_path, const args& options);
+    struct LexerReturn {
+        tokenlist tokens;
+        size_t errors;
+    };
+
+    LexerReturn lexer(const std::string_view& code, const char* file_path, const args& options);
 }
 
 #endif

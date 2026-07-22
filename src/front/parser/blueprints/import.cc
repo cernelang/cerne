@@ -131,32 +131,8 @@ std::unique_ptr<cerne::Node> cerne::Import(const blueprint_arguments& args) {
                     next.span,
                     std::format("Unexpected '{}' after '{}' in the import statement", *(next.value), *(current_token.value))
                 ),
-                next.span,
-                std::format(
-                    "{}{}",
-                    cerne::note(
-                        std::format(
-                            "In import statements, after the initial identifier, it's expected either a dot ({}.{}) for package imports, a member access ({}::{}) for user (package) imports or simply {}nothing{} at all for regular identifier imports (standalone package imports).",
-                            std::format("{}{}", RESET, ce_colors::fgred),
-                            std::format("{}{}", RESET BOLD, ce_colors::fgwhite),
-                            std::format("{}{}", RESET, ce_colors::fgred),
-                            std::format("{}{}", RESET BOLD, ce_colors::fgwhite),
-                            std::format("{}{}", RESET, ce_colors::fgred),
-                            std::format("{}{}", RESET BOLD, ce_colors::fgwhite)
-                        )
-                    ),
-                    cerne::example(
-                        std::format(
-                            "Following are a couple of valid and invalid examples of import statements:\n・ {}import package.submodule{} \t-> valid package import\n・ {}import user::package{} \t-> valid user package import \n・ {}import user!package{} \t\t-> invalid import statement",
-                            RESET BOLD BG "233m",
-                            std::format("{}{}", RESET BOLD, ce_colors::fgwhite),
-                            RESET BOLD BG "233m",
-                            std::format("{}{}", RESET BOLD, ce_colors::fgwhite),
-                            RESET BOLD BG "233m",
-                            std::format("{}{}", RESET BOLD, ce_colors::fgwhite)
-                        )
-                    )
-                )
+                next.span
+                // cerne::help()
             );
             machine->skip_to_next_end();
             machine->errors++;

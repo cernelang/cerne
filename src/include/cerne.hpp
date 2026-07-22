@@ -16,13 +16,4 @@
 #include "./parser.hpp"
 #include "./sema.hpp"
 
-// cerne version update comes here for now
-struct Version {
-    int alpha;
-    int major;
-    int minor;
-};
-
-constexpr Version CERNE_VERSION{0, 3, 0};
-
 #endif

@@ -132,6 +132,15 @@ std::string cerne::JSONBuilder::build() {
                     (next_it == json.properties.end() ? "" : ",")
                 );
 
+            } else if constexpr (std::is_same_v<T, size_t>) {
+
+                json_str += std::format(
+                    "\"{}\": {}{}\n",
+                    key, 
+                    val, 
+                    (next_it == json.properties.end() ? "" : ",")
+                );
+
             }
         }, value);
     }
@@ -141,7 +150,7 @@ std::string cerne::JSONBuilder::build() {
     return json_str;
 }
 
-std::string cerne::JSONBuilder::convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>, std::vector<bool>>& arr) {
+std::string cerne::JSONBuilder::convert_array(const std::variant<std::vector<std::string>, std::vector<JSON>, std::vector<bool>, std::vector<size_t>>& arr) {
     std::string json_str = std::string(indentation_level * JSON_INDENT_SIZE, ' ') + "[\n";
     indentation_level++;
 
@@ -173,6 +182,14 @@ std::string cerne::JSONBuilder::convert_array(const std::variant<std::vector<std
                     (b != val.back() ? "," : "")
                 );
             }
+        } else if constexpr(std::is_same_v<T, std::vector<size_t>>) {
+            for(const auto& n : val) {
+                json_str += std::format(
+                    "{}{}\n", 
+                    n,
+                    (n != val.back() ? "," : "")
+                );
+            }
         }
     }, arr);
 
@@ -181,6 +198,6 @@ std::string cerne::JSONBuilder::convert_array(const std::variant<std::vector<std
     return json_str;
 }
 
-void cerne::JSONBuilder::add_property(const std::string& key, const std::variant<std::string, cerne::JSON, bool>& value) {
+void cerne::JSONBuilder::add_property(const std::string& key, const std::variant<std::string, cerne::JSON, bool, size_t>& value) {
     json.properties[key] = value;
 }

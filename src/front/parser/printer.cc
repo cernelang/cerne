@@ -16,10 +16,10 @@
 // convert span to JSON
 cerne::JSON span_to_json(const cerne::Span& span) {
     cerne::JSON json;
-    json.properties["line"] = std::format("{}", span.line);
-    json.properties["col"] = std::format("{}", span.col);
-    json.properties["offset"] = std::format("{}", span.offset);
-    json.properties["length"] = std::format("{}", span.length);
+    json.properties["line"] = span.line;
+    json.properties["col"] = span.col;
+    json.properties["offset"] = span.offset;
+    json.properties["length"] = span.length;
     return json;
 }
 

@@ -20,6 +20,35 @@ void cerne::error(const char* src, const std::string& message) {
     RESET << std::endl;
 }
 
+// def initialization
+thread_local cerne::DEngine* cerne::diag_engine = nullptr;
+
+// default initialization of debug engine too
+thread_local cerne::DebugEngine* cerne::debug_engine = nullptr;
+
+/**
+ * returns string equivalent of cerror block
+ */
+std::string cerne::cerr_to_msg(const CERROR& error) {
+    std::string msg = std::format("{}{}: {}\n\n{}{}{}:{}:{}{}\n{}{}{}{}{}",
+        std::format(
+            "{}[{}{}{}]{}", 
+            FG "196;1m", 
+            std::format("{}]8;;https://docs.cerne.space/errors#code_{}{}", ESC, error.errcode, "\x07"),
+            std::format("CNE{:04d}", error.errcode),
+            ESC "]8;;" "\x07" RESET FG "196;1m", RESET BOLD
+        ), 
+        ce_colors::fgwhite, error.message,
+        BOLD, ce_colors::fgpink, error.src, error.span.line, error.span.col, ce_colors::fgwhite, RESET,
+        error.code_snippet,
+        RESET,
+        error.extras,
+        RESET
+    );
+
+    return msg;
+}
+
 /**
  * This function is dedicated to log compiler errors
  */
@@ -31,22 +60,19 @@ void cerne::cerror(
         const cerne::Span& span,
         const std::string_view& extras
     ) {
-    // print appropriate error message
-    std::cerr << 
-    std::format(
-        "{}[{}{}{}]{}", 
-        FG "196;1m", 
-        std::format("{}]8;;https://docs.cerne.space/errors#code_{}{}", ESC, errcode, "\x07"),
-        std::format("CNE{:04d}", errcode),
-        ESC "]8;;" "\x07" RESET FG "196;1m", RESET BOLD
-    ) << 
-    FG "255m" << ':' << ' ' << message << '\n' << '\n' <<
-    FG "219;1m" << src << ':' << span.line << ":" << span.col << FG "255m" << '\n' << RESET <<
-    code_snippet << 
-    RESET << 
-    extras << 
-    RESET <<
-    std::endl;
+    // create cerror object
+    auto cerr = CERROR{
+        .src = std::string(src),
+        .errcode = errcode,
+        .span = span,
+        .message = std::string(message),
+        .code_snippet = std::string(code_snippet),
+        .extras = std::string(extras)
+    };
+
+    // push to dengine or fallback to std::cerr
+    if(cerne::diag_engine) cerne::diag_engine->add_error(cerr);
+    else std::cerr << cerne::cerr_to_msg(cerr) << std::endl;
 }
 
 // code snippet & helper
@@ -98,8 +124,12 @@ LineWindow get_line(const std::string& code, size_t line, size_t col) {
     return LineWindow{.line=substr,.start=window_start};
 }
 
-std::string_view cerne::code_snippet(const std::string_view& code, cerne::Span span, const std::string_view& under_message) {
-    static thread_local std::string window;
+/**
+ * Literally just prints the specific line of code with a pointer to the error and a message under it.
+ * This is used for diagnostics and error reporting.
+ */
+std::string cerne::code_snippet(const std::string_view& code, cerne::Span span, const std::string_view& under_message) {
+    std::string window;
     window.clear();
     
     // we first snatch the line of the error 
@@ -117,9 +147,12 @@ std::string_view cerne::code_snippet(const std::string_view& code, cerne::Span s
     window += std::format("{}{}|{}{}\t{}\n", ce_colors::fggray, std::string(width+1, ' '), RESET BOLD, ce_colors::fgwhite, std::string(span.col - start, ' ') + ce_colors::fgred + '^' + std::string(std::min(span.length - 1, (size_t)(line.size()-(span.col%40))), '~') + RESET);
     window += std::format("{}{}|{}{}\t{}\n{}",ce_colors::fggray, std::string(width+1, ' '), RESET BOLD, ce_colors::fgwhite, std::string(span.col - start, ' ') + std::string(under_message), RESET);
 
-    return std::string_view(window);
+    return window;
 }
 
+/**
+ * same as code_snippet but doesn't print the pointer and message
+ */
 std::string cerne::oneline_code_snippet(const std::string_view& code, cerne::Span span) {
     LineWindow line_window = get_line(std::string(code), span.line, span.col);
     std::string line = line_window.line;
@@ -149,19 +182,9 @@ std::string highlight(const std::string& code) {
 }
 
 /**
- * Utility for simply converting notes into a more consistent format (used for footers in diagnostics or manual notes for example)
+ * Utility to provide an additional helpful message in case the user didn't understand the error or is unsure on how to fix it.
+ * Kind of a more generalized version of =note and =example
  */
-std::string cerne::note(const std::string& base_note) {
-    return std::format("\n{}{}= Note{}{}: {}{}\n", BOLD, ce_colors::fgblue, RESET BOLD, ce_colors::fgwhite, base_note, RESET);
-}
-
-/**
- * Same as before but for examples
- */
-std::string cerne::example(const std::string& base_example) {
-    return std::format("\n{}{}= Example{}{}: {}{}\n", BOLD, ce_colors::fggreen, RESET BOLD, ce_colors::fgwhite, base_example, RESET);
-}
-
 std::string cerne::help(const std::string& base_note) {
     return std::format("\n{}{}help{}{}: {}{}\n", BOLD, ce_colors::fgyellow, RESET BOLD, ce_colors::fgwhite, base_note, RESET);
 }
